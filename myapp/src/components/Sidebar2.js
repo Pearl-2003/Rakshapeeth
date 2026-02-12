@@ -38,13 +38,11 @@ export default function Sidebar2({ sidebarOpen, setSidebarOpen }) {
       <nav className="flex flex-col space-y-2">
         {/* Sidebar Links */}
         {[
-          { name: "Dashboard",  path: "/GuardDashboard" },
-          { name: "ManualEntry",  path: "/ManualEntry" },
-          { name: "IrisScan",  path: "/IrisScan" },
-          { name: "NumberPlateScan",  path: "/NumberPlateScan" },
-          { name: "ExpectedVisitors",  path: "/ExpectedVisitors" },
-          { name: "SendAlets",  path: "/SendAlerts" },
-
+          { name: "Dashboard",  path: "/guard/dashboard" },
+          { name: "ManualEntry",  path: "/guard/manual-entry" },
+          { name: "IrisScan",  path: "/guard/verify-iris" },
+          { name: "NumberPlateScan",  path: "/guard/vehicle-verification" },
+          { name: "ExpectedVisitors",  path: "/guard/visitors" },
         ].map((item) => (
           <Link
             key={item.name}

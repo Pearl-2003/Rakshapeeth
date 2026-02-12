@@ -1,7 +1,9 @@
+//feedback.js
 import React, { useState, useEffect, useRef } from "react";
 import HeaderNavbar from "../components/HeaderNavbar";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
+import Swal from "sweetalert2";
 
 export default function ParentRegister() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -11,37 +13,126 @@ export default function ParentRegister() {
   const registerRef = useRef(null);
   const moreRef = useRef(null);
 
+  const [loading, setLoading] = useState(false);
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   useEffect(() => {
     function handleClickOutside(event) {
-      if (registerRef.current && !registerRef.current.contains(event.target)) setRegisterOpen(false);
-      if (moreRef.current && !moreRef.current.contains(event.target)) setMoreOpen(false);
+      if (registerRef.current && !registerRef.current.contains(event.target))
+        setRegisterOpen(false);
+      if (moreRef.current && !moreRef.current.contains(event.target))
+        setMoreOpen(false);
     }
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const [formData, setFormData] = useState({ name: "", email: "", feedbackType: "Suggestion", message: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    feedbackType: "Suggestion",
+    message: ""
+  });
+
   const [errors, setErrors] = useState({});
 
+  // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: e.target.value ? "" : `${e.target.name} is required` });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+
+    let error = "";
+
+    if (!value.trim()) {
+      error = `${name} is required`;
+    }
+
+    if (name === "email") {
+      if (!value.trim()) {
+        error = "Email is required";
+      } else if (!emailRegex.test(value)) {
+        error = "Please enter a valid email address";
+      }
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error
+    }));
   };
 
-  const handleSubmit = (e) => {
+  // ================= HANDLE SUBMIT =================
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) return;
-    alert("🎉 Thank you for your feedback!");
-    setFormData({ name: "", email: "", feedbackType: "Suggestion", message: "" });
+
+    let newErrors = {};
+
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    if (!formData.message.trim())
+      newErrors.message = "Message is required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "http://localhost:5000/api/feedback/submit",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Thank You!",
+          text: "Your feedback has been submitted successfully.",
+          confirmButtonColor: "#8B5E3C"
+        });
+
+        setFormData({
+          name: "",
+          email: "",
+          feedbackType: "Suggestion",
+          message: ""
+        });
+
+        setErrors({});
+      } else {
+        Swal.fire("Error", data.message || "Failed to submit feedback", "error");
+      }
+    } catch (error) {
+      console.error("Feedback submit error:", error);
+      Swal.fire("Error", "Server error. Please try again later.", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8f0e3] via-[#f1e0ca] to-[#e7c9a9] flex flex-col relative">
-      {/* Background decorative circles */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-yellow-200/30 rounded-full blur-3xl animate-pulse-slow pointer-events-none"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl animate-pulse-slow pointer-events-none"></div>
-
-      {/* Navbar */}
+    <div className="min-h-screen font-sans bg-gradient-to-br from-[#f9ede3] via-[#f5e3d1] to-[#e7c9a9] flex flex-col">
       <HeaderNavbar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -53,86 +144,99 @@ export default function ParentRegister() {
         moreRef={moreRef}
       />
 
-      {/* Sidebar */}
-      {sidebarOpen && <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setSidebarOpen(false)}></div>}
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* Main Content */}
-<main className="flex-grow flex flex-col justify-center items-center px-4 py-16">
-  <h1 className="text-5xl md:text-6xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E] mb-10 drop-shadow-lg">
-    Feedback Form
-  </h1>
-
-  <form
-    onSubmit={handleSubmit}
-    className="w-full max-w-3xl md:max-w-4xl bg-cream/90 backdrop-blur-md shadow-2xl rounded-3xl p-10 md:p-12 space-y-6 border border-brown/30"
-  >
-    {/* Name */}
-    <div className="relative">
-      <input
-        type="text"
-        name="name"
-        value={formData.name}
-        onChange={handleChange}
-        placeholder="Name"
-        className={`w-full px-4 py-3 rounded-xl border border-brown/40 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-sm hover:shadow-md transition duration-300 ${
-          errors.name ? "border-red-500" : ""
-        }`}
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
       />
-      {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-    </div>
 
-    {/* Email */}
-    <div className="relative">
-      <input
-        type="email"
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-        placeholder="Email"
-        className={`w-full px-4 py-3 rounded-xl border border-brown/40 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-sm hover:shadow-md transition duration-300 ${
-          errors.email ? "border-red-500" : ""
-        }`}
-      />
-      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-    </div>
+      <main className="flex-grow w-full max-w-5xl mx-auto px-6 py-16 text-brown">
+        <h2 className="text-4xl md:text-5xl mb-12 text-center font-extrabold">
+          Feedback Form
+        </h2>
 
-    {/* Feedback Type */}
-    <div>
-      <select
-        name="feedbackType"
-        value={formData.feedbackType}
-        onChange={handleChange}
-        className="w-full px-4 py-3 rounded-xl border border-brown/40 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-sm hover:shadow-md transition duration-300 bg-white"
-      >
-        <option>Suggestion</option>
-        <option>Bug Report</option>
-        <option>Compliment</option>
-        <option>Other</option>
-      </select>
-    </div>
+        <form
+          onSubmit={handleSubmit}
+          className="bg-brown/20 p-12 rounded-3xl shadow-2xl space-y-8 max-w-3xl mx-auto"
+        >
+          {/* Name */}
+          <div>
+            <label>Name *</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className={`w-full p-3 rounded ${
+                errors.name ? "border-red-500" : ""
+              }`}
+            />
+            {errors.name && <p className="text-red-600">{errors.name}</p>}
+          </div>
 
-    {/* Message */}
-    <div className="relative">
-      <textarea
-        name="message"
-        value={formData.message}
-        onChange={handleChange}
-        rows="5"
-        placeholder="Your feedback..."
-        className={`w-full px-4 py-3 rounded-xl border border-brown/40 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-sm hover:shadow-md transition duration-300 ${
-          errors.message ? "border-red-500" : ""
-        } bg-white`}
-      ></textarea>
-      {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
-    </div>
+          {/* Email */}
+          <div>
+            <label>Email *</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`w-full p-3 rounded ${
+                errors.email ? "border-red-500" : ""
+              }`}
+            />
+            {errors.email && <p className="text-red-600">{errors.email}</p>}
+          </div>
 
-    {/* Submit */}
-    <button className="w-full py-3 bg-gradient-to-br from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E] text-white font-bold rounded-full shadow-lg hover:scale-105 hover:shadow-[0_0_20px_rgba(139,90,43,0.5)] transition-all duration-500">
-      Submit Feedback
-    </button>
-  </form>
-</main>
+          {/* Feedback Type */}
+          <div>
+            <label>Feedback Type</label>
+            <select
+              name="feedbackType"
+              value={formData.feedbackType}
+              onChange={handleChange}
+              className="w-full p-3 rounded"
+            >
+              <option>Suggestion</option>
+              <option>Bug Report</option>
+              <option>Compliment</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          {/* Message */}
+          <div>
+            <label>Message *</label>
+            <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              rows="5"
+              className={`w-full p-3 rounded ${
+                errors.message ? "border-red-500" : ""
+              }`}
+            />
+            {errors.message && (
+              <p className="text-red-600">{errors.message}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-[#8B5E3C] text-white rounded-full"
+          >
+            {loading ? "Submitting..." : "Submit Feedback"}
+          </button>
+        </form>
+      </main>
 
       <Footer />
     </div>

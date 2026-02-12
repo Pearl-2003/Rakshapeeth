@@ -1,4 +1,3 @@
-// models/whitelist.js
 const mongoose = require("mongoose");
 
 const whitelistSchema = new mongoose.Schema({
@@ -12,29 +11,55 @@ const whitelistSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    uppercase: true,    // Standardize vehicle numbers like "RJ14AB1234"
+    uppercase: true,
     trim: true
   },
 
   type: {
     type: String,
-    enum: ["staff", "faculty", "staff family", "worker", "shop owner"],
+    enum: [
+      "faculty",
+      "staff",
+      "staff family",
+      "shop owner",
+      "hospital worker",
+      "hostel worker",
+      "worker"
+    ],
+    required: true
+  },
+
+  // 🆕 Reference faculty/staff (ONLY for staff family)
+  referenceFacultyName: {
+    type: String,
+    trim: true,
+    required: function () {
+      return this.type === "staff family";
+    }
+  },
+
+  gender: {
+    type: String,
+    enum: ["male", "female", "other"],
     required: true
   },
 
   approvedBy: {
-    type: String,       // Optional: admin who added the entry
+    type: String,
     default: "system"
-  },
-
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
 
 }, { timestamps: true });
 
-// 🔍 For quick searches and analytics
-whitelistSchema.index({ vehicleNo: 1, type: 1 });
+/* 🔍 Indexes for admin filters & search */
+whitelistSchema.index({
+  type: 1,
+  gender: 1,
+  vehicleOwnerName: 1,
+  referenceFacultyName: 1,
+  vehicleNo: 1
+});
 
-module.exports = mongoose.model("Whitelist", whitelistSchema);
+module.exports =
+  mongoose.models.Whitelist ||
+  mongoose.model("Whitelist", whitelistSchema);

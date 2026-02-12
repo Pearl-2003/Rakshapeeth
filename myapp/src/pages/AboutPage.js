@@ -1,14 +1,15 @@
-// src/pages/AboutPage.js
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../assets/logo.png";
-import HeaderNavbar from "../components/HeaderNavbar";
+import HeaderNavbarAbout from "../components/HeaderNavbarAbout";
 import Sidebar from "../components/Sidebar";
-import Footer from "../components/Footer";
+import FooterAbout from "../components/FooterAbout";
+
 export default function AboutPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [language, setLanguage] = useState("en"); // Language state
 
   const registerRef = useRef(null);
   const moreRef = useRef(null);
@@ -26,107 +27,117 @@ export default function AboutPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Translation object
+  const translations = {
+    en: {
+      aboutTitle: "About Us",
+      para1:
+        "Rakshapeeth is an advanced automated gate security system designed specifically for universities and educational institutions. Our goal is to redefine campus safety by combining cutting-edge technology with intelligent automation — ensuring a secure, efficient, and transparent access management experience for students, staff, and visitors.",
+      para2:
+        "For students, Rakshapeeth offers a dual-layer verification system that combines iris recognition with student ID scanning. This ensures that every individual entering the campus is verified beyond doubt, creating a reliable and tamper-proof layer of protection for the institution.",
+      para3:
+        "When it comes to visitors, Rakshapeeth provides a truly smart experience. Its number plate recognition system automatically scans and validates incoming vehicles, while unregistered guests can still be logged manually for security tracking. Visitors can also submit pre-visit requests, making entry more convenient and organized. If a blacklisted user or vehicle is detected, Rakshapeeth immediately triggers an alert to security personnel, ensuring that potential threats are addressed instantly and effectively.",
+      para4:
+        "Safety goes beyond the gate. With Rakshapeeth’s real-time parent notification system, parents receive instant alerts whenever their child enters or exits the campus. This promotes peace of mind, transparency, and trust between families and institutions.",
+      para5:
+        "At its core, Rakshapeeth is more than a security system — it’s a vision for safer campuses through innovation. By merging advanced verification, intelligent monitoring, and real-time communication, Rakshapeeth empowers universities to create a secure and connected environment where safety is effortless, reliable, and future-ready.",
+      quickLinks: ["Home", "About", "Customer Care", "Contact Us"],
+      connect: { email: "Email: info@rakshapeeth.com", phone: "Phone: +91 12345 67890" },
+      header: { home: "Home", about: "About", register: "Customer Care", contact: "Contact Us" },
+      footerQuickLinks: "Quick Links",
+      footerConnect: "Connect",
+    },
+    hi: {
+      aboutTitle: "रक्षापीठ के विषय में",
+      para1:
+        "रक्षापीठ एक उन्नत स्वचालित गेट सुरक्षा प्रणाली है, जो विशेष रूप से विश्वविद्यालयों और शैक्षिक संस्थानों के लिए डिज़ाइन की गई है। हमारा लक्ष्य अत्याधुनिक तकनीक और बुद्धिमान स्वचालन के संयोजन के माध्यम से कैंपस सुरक्षा को फिर से परिभाषित करना है — जिससे छात्रों, कर्मचारियों और आगंतुकों के लिए एक सुरक्षित, कुशल और पारदर्शी प्रवेश प्रबंधन अनुभव सुनिश्चित हो सके।",
+      para2:
+        "छात्रों के लिए, रक्षापीठ एक डुअल-लेयर सत्यापन प्रणाली प्रदान करता है, जो आइरिस मान्यता और छात्र आईडी स्कैनिंग को जोड़ती है। यह सुनिश्चित करता है कि कैंपस में प्रवेश करने वाला प्रत्येक व्यक्ति संदेह से परे सत्यापित हो, और संस्थान के लिए एक विश्वसनीय और छेड़छाड़-रहित सुरक्षा स्तर बनता है।",
+      para3:
+        "आगंतुकों के मामले में, रक्षापीठ वास्तव में स्मार्ट अनुभव प्रदान करता है। इसका नंबर प्लेट पहचान प्रणाली स्वचालित रूप से आने वाली गाड़ियों को स्कैन और मान्य करती है, जबकि पंजीकृत नहीं किए गए आगंतुकों को मैन्युअल रूप से लॉग किया जा सकता है। आगंतुक प्री-वीज़िट अनुरोध भी जमा कर सकते हैं, जिससे प्रवेश अधिक सुविधाजनक और व्यवस्थित हो जाता है। यदि कोई काला सूचीबद्ध उपयोगकर्ता या वाहन पाया जाता है, तो रक्षापीठ तुरंत सुरक्षा कर्मियों को अलर्ट करता है।",
+      para4:
+        "सुरक्षा केवल गेट तक सीमित नहीं है। रक्षापीठ की रीयल-टाइम अभिभावक सूचना प्रणाली के साथ, माता-पिता को तुरंत अलर्ट मिलते हैं जब भी उनका बच्चा कैंपस में प्रवेश या बाहर निकलता है। इससे परिवारों और संस्थानों के बीच शांति, पारदर्शिता और विश्वास बढ़ता है।",
+      para5:
+        "मूल रूप से, रक्षापीठ केवल एक सुरक्षा प्रणाली से अधिक है — यह नवाचार के माध्यम से सुरक्षित कैंपस के लिए एक दृष्टि है। उन्नत सत्यापन, बुद्धिमान निगरानी और रीयल-टाइम संचार को मिलाकर, रक्षापीठ विश्वविद्यालयों को एक सुरक्षित और जुड़ा हुआ वातावरण बनाने में सक्षम बनाता है।",
+      quickLinks: ["होम", "हमारे बारे में", "ग्राहक सेवा", "संपर्क करें"],
+      connect: { email: "ईमेल: info@rakshapeeth.com", phone: "फोन: +91 12345 67890" },
+      header: { home: "होम", about: "हमारे बारे में", register: "ग्राहक सेवा", contact: "संपर्क करें" },
+      footerQuickLinks: "त्वरित लिंक",
+      footerConnect: "संपर्क करें",
+    },
+  };
+
   return (
     <div className="min-h-screen font-sans bg-gradient-to-b from-cream to-cream/90 flex flex-col">
-      {/*copy start*/}
-      <HeaderNavbar
-                   sidebarOpen={sidebarOpen}
-                   setSidebarOpen={setSidebarOpen}
-                   registerOpen={registerOpen}
-                   setRegisterOpen={setRegisterOpen}
-                   moreOpen={moreOpen}
-                   setMoreOpen={setMoreOpen}
-                   registerRef={registerRef}
-                   moreRef={moreRef}
-                 />
-           
-                 {/* Sidebar Overlay */}
-                 {sidebarOpen && (
-                   <div
-                     className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity"
-                     onClick={() => setSidebarOpen(false)}
-                   ></div>
-                 )}
-           
-                 {/* Sidebar */}
-                 <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-{/*copy end*/}
+      {/* Header */}
+      <HeaderNavbarAbout
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        registerOpen={registerOpen}
+        setRegisterOpen={setRegisterOpen}
+        moreOpen={moreOpen}
+        setMoreOpen={setMoreOpen}
+        registerRef={registerRef}
+        moreRef={moreRef}
+        language={language} // Pass language to header
+        labels={translations[language].header} // header labels
+      />
+
+      {/* Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+      {/* Language Toggle */}
+      <div className="flex justify-center mt-8 mb-4">
+        <button
+          onClick={() => setLanguage("en")}
+          className={`px-4 py-2 rounded-l ${language === "en" ? "bg-brown text-cream" : "bg-cream text-brown"}`}
+        >
+          English
+        </button>
+        <button
+          onClick={() => setLanguage("hi")}
+          className={`px-4 py-2 rounded-r ${language === "hi" ? "bg-brown text-cream" : "bg-cream text-brown"}`}
+        >
+          हिंदी
+        </button>
+      </div>
+
       {/* Main Content */}
       <main className="flex-grow max-w-7xl mx-auto px-6 py-16 text-brown">
         <h2 className="text-4xl md:text-5xl mb-8 text-center text-brown/90 underline decoration-cream/60">
-          About Us
+          {translations[language].aboutTitle}
         </h2>
 
         <div className="flex flex-col md:flex-row items-start bg-cream/60 rounded-2xl shadow-xl p-8 md:p-12 space-x-0 md:space-x-8 space-y-6 md:space-y-0 text-brown/90 leading-relaxed text-lg">
           {/* Left Image */}
-          <img
-            src={Logo}
-            alt="Rakshapeeth"
-            className="w-full md:w-1/3 rounded-2xl shadow-lg"
-          />
+          <img src={Logo} alt="Rakshapeeth" className="w-full md:w-1/3 rounded-2xl shadow-lg" />
 
           {/* Text */}
           <div className="md:flex-1 text-justify">
             <p className="first-letter:text-6xl first-letter:font-serif first-letter:float-left first-letter:mr-2 first-letter:leading-tight first-letter:-mt-2">
-              Rakshapeeth is an advanced automated gate security system designed specifically for universities and educational institutions. Our goal is to redefine campus safety by combining cutting-edge technology with intelligent automation — ensuring a secure, efficient, and transparent access management experience for students, staff, and visitors.
+              {translations[language].para1}
             </p>
-
-            <p>
-              For students, Rakshapeeth offers a dual-layer verification system that combines iris recognition with student ID scanning. This ensures that every individual entering the campus is verified beyond doubt, creating a reliable and tamper-proof layer of protection for the institution.
-            </p>
-
-            <p>
-              When it comes to visitors, Rakshapeeth provides a truly smart experience. Its number plate recognition system automatically scans and validates incoming vehicles, while unregistered guests can still be logged manually for security tracking. Visitors can also submit pre-visit requests, making entry more convenient and organized. If a blacklisted user or vehicle is detected, Rakshapeeth immediately triggers an alert to security personnel, ensuring that potential threats are addressed instantly and effectively.
-            </p>
-
-            <p>
-              Safety goes beyond the gate. With Rakshapeeth’s real-time parent notification system, parents receive instant alerts whenever their child enters or exits the campus. This promotes peace of mind, transparency, and trust between families and institutions.
-            </p>
-
-            <p>
-              At its core, Rakshapeeth is more than a security system — it’s a vision for safer campuses through innovation. By merging advanced verification, intelligent monitoring, and real-time communication, Rakshapeeth empowers universities to create a secure and connected environment where safety is effortless, reliable, and future-ready.
-            </p>
+            <p>{translations[language].para2}</p>
+            <p>{translations[language].para3}</p>
+            <p>{translations[language].para4}</p>
+            <p>{translations[language].para5}</p>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-brown to-brown/90 text-cream mt-16 relative overflow-hidden">
-        <div className="absolute -top-10 -left-10 w-32 h-32 bg-cream/10 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-cream/10 rounded-full blur-3xl animate-pulse-slow"></div>
-
-        <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-3 gap-8 relative z-10">
-          <div className="space-y-4">
-            <h2 className="text-3xl font-extrabold tracking-wide">RAKSHAPEETH</h2>
-            <p className="text-cream/80">Automated Gate Security System for Banasthali Vidyapith.</p>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="font-semibold text-lg">Quick Links</h3>
-            <ul className="space-y-1">
-              <li><Link to="/" className="hover:text-yellow-300 transition-all duration-300">Home</Link></li>
-              <li><Link to="/about" className="hover:text-yellow-300 transition-all duration-300">About</Link></li>
-              <li><a href="#" className="hover:text-yellow-300 transition-all duration-300">Register</a></li>
-              <li><a href="#" className="hover:text-yellow-300 transition-all duration-300">Contact Us</a></li>
-            </ul>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="font-semibold text-lg">Connect</h3>
-            <p>Email: info@rakshapeeth.com</p>
-            <p>Phone: +91 12345 67890</p>
-            <div className="flex space-x-4 mt-3">
-              <a href="#" className="p-2 bg-cream/20 rounded-full hover:bg-cream/50 text-brown shadow-lg transition-all duration-300 hover:scale-110">🐦</a>
-              <a href="#" className="p-2 bg-cream/20 rounded-full hover:bg-cream/50 text-brown shadow-lg transition-all duration-300 hover:scale-110">🔗</a>
-              <a href="#" className="p-2 bg-cream/20 rounded-full hover:bg-cream/50 text-brown shadow-lg transition-all duration-300 hover:scale-110">📘</a>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-cream/40 mt-6 py-4 text-center text-cream/70 relative z-10">
-          © {new Date().getFullYear()} RAKSHAPEETH. All rights reserved.
-        </div>
-      </footer>
+      <FooterAbout
+        language={language} // Pass language
+        labels={{ quickLinks: translations[language].footerQuickLinks, connect: translations[language].footerConnect }}
+        quickLinks={translations[language].quickLinks}
+        connect={translations[language].connect}
+      />
     </div>
   );
 }

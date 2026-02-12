@@ -1,6 +1,7 @@
-import React, { useState } from "react";   // ✅ FIXED — added useState
+import React, { useState } from "react";
+import { Link } from "react-router-dom"; // ✅ ADD THIS
 import Sidebar from "../../components/Sidebar";
-import HeaderNavbar from "../../components/HeaderNavbar";
+import HeaderNavbar from "../../components/HeaderNavbar4";
 import Footer from "../../components/Footer";
 import { CalendarPlus, Calendar, Bell } from "lucide-react";
 
@@ -25,18 +26,30 @@ export default function ParentDashboard() {
           </p>
 
           <div className="flex flex-col md:flex-row justify-center gap-14 w-full max-w-[1600px] px-6">
-            <div className="bg-white hover:bg-[#f9f3ed] shadow-2xl rounded-3xl p-16 flex-1 min-w-[400px] h-[400px] text-center border border-[#e6d5c3] transition-all duration-300 transform hover:scale-105">
-              <div className="flex justify-center mb-6">
-                <CalendarPlus size={70} className="text-[#6b4226]" />
-              </div>
-              <h2 className="text-3xl font-semibold text-[#6b4226] mb-4">
-                Request a Visit
-              </h2>
-              <p className="text-lg text-[#7b5e3b]">
-                Schedule a visit to meet your child or handle administrative needs easily.
-              </p>
-            </div>
 
+            {/* 🔗 REQUEST A VISIT — LINKED */}
+            <Link
+              to="/parent-visit-request"
+              className="flex-1 min-w-[400px] h-[400px]"
+            >
+              <div className="bg-white hover:bg-[#f9f3ed] shadow-2xl rounded-3xl p-16 h-full text-center border border-[#e6d5c3] transition-all duration-300 transform hover:scale-105 cursor-pointer">
+                <div className="flex justify-center mb-6">
+                  <CalendarPlus size={70} className="text-[#6b4226]" />
+                </div>
+                <h2 className="text-3xl font-semibold text-[#6b4226] mb-4">
+                  Request a Visit
+                </h2>
+                <p className="text-lg text-[#7b5e3b]">
+                  Schedule a visit to meet your child or handle administrative needs easily.
+                </p>
+              </div>
+            </Link>
+
+            {/* VISIT HISTORY */}
+             <Link
+              to="/parent/view-history"
+              className="flex-1 min-w-[400px] h-[400px]"
+            >
             <div className="bg-white hover:bg-[#f9f3ed] shadow-2xl rounded-3xl p-16 flex-1 min-w-[400px] h-[400px] text-center border border-[#e6d5c3] transition-all duration-300 transform hover:scale-105">
               <div className="flex justify-center mb-6">
                 <Calendar size={70} className="text-[#6b4226]" />
@@ -48,18 +61,8 @@ export default function ParentDashboard() {
                 Track all your past and upcoming visit details conveniently.
               </p>
             </div>
+            </Link> 
 
-            <div className="bg-white hover:bg-[#f9f3ed] shadow-2xl rounded-3xl p-16 flex-1 min-w-[400px] h-[400px] text-center border border-[#e6d5c3] transition-all duration-300 transform hover:scale-105">
-              <div className="flex justify-center mb-6">
-                <Bell size={70} className="text-[#6b4226]" />
-              </div>
-              <h2 className="text-3xl font-semibold text-[#6b4226] mb-4">
-                Notifications
-              </h2>
-              <p className="text-lg text-[#7b5e3b]">
-                Stay informed with important school updates and alerts.
-              </p>
-            </div>
           </div>
         </main>
       </div>

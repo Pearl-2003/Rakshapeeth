@@ -3,7 +3,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
 const router = express.Router();
-
+const verifyAdmin = require("../middleware/verifyAdmin");
+const adminController = require("../controllers/adminController");
 router.post("/admin/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -35,8 +36,6 @@ router.post("/admin/login", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-const verifyAdmin = require("../middleware/verifyAdmin");
-
 // ✅ Example PROTECTED route
 router.get("/admin/dashboard", verifyAdmin, async (req, res) => {
   res.status(200).json({
@@ -50,5 +49,9 @@ router.get("/admin/all", async (req, res) => {
   res.json(admins);
 });
 
-
+router.get(
+  "/current-status",
+  verifyAdmin,
+  adminController.getCurrentStatus
+);
 module.exports = router;

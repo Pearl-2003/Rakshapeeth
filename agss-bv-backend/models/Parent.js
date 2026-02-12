@@ -1,3 +1,4 @@
+// models/Parent.js
 const mongoose = require('mongoose');
 
 const ParentSchema = new mongoose.Schema({

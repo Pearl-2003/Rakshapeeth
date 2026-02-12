@@ -31,15 +31,16 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           { name: "Handle Requests", icon: "✅", path: "/admin/requests" },
           { name: "Manage Blacklist", icon: "🚫", path: "/admin/blacklist" },
           { name: "Manage Whitelist", icon: "✅", path: "/admin/whitelist" },
-          { name: "Manage Occasional Visitors", icon: "👥", path: "/admin/visitors" },
+          { name: "Manage Occasional Visitors", icon: "👥", path: "/admin/occasional-visitors" },
           { name: "Manage Students", icon: "🎓", path: "/admin/students" },
-          { name: "Manage Guard", icon: "🛡️", path: "/admin/guard" },
-          { name: "Gatepass", icon: "⏳", path: "/admin/schedule" },
-          { name: "System Activity", icon: "📊", path: "/admin/monitor" },
-          { name: "Receive Alerts", icon: "🚨", path: "/admin/alerts" },
+          { name: "Manage Guard", icon: "🛡️", path: "/admin/guards" },
+          { name: "Gatepass", icon: "⏳", path: "/admin/create-gatepass" },
+          { name: "Active Gatepasses", icon: "⏳", path: "/admin/active-gatepasses" },
+          { name: "Campus Activity", icon: "📊", path: "/admin/system-activity" },
+          { name: "Alerts", icon: "🚨", path: "/admin/alerts" },
           { name: "Monitor Guards", icon: "🛡️", path: "/admin/monitor-guard" },
-          { name: "View Student Logs", icon: "📄", path: "/admin/logs" },
-          { name: "View Vehicle Logs", icon: "🚗", path: "/admin/vehicles" },
+          { name: "View Student Logs", icon: "📄", path: "/admin/view-student-log" },
+          { name: "View Vehicle Logs", icon: "🚗", path: "/admin/vehicle-logs" },
         ].map((item) => (
           <Link
             key={item.name}

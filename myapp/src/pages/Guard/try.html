@@ -1,0 +1,105 @@
+import { useEffect, useRef, useState } from "react";
+import Quagga from "quagga";
+
+export default function BarcodeScannerReact() {
+  const [studentId, setStudentId] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const scannerRef = useRef(null);
+
+  const startScan = () => {
+    if (!scannerRef.current) {
+      alert("Scanner container not ready");
+      return;
+    }
+
+    setStudentId("");
+    setScanning(true);
+
+    Quagga.init(
+      {
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: scannerRef.current,
+          constraints: {
+            facingMode: "environment", // ✅ IMPORTANT
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        },
+        decoder: {
+          readers: ["code_128_reader"]
+        },
+        locate: true,
+        numOfWorkers: navigator.hardwareConcurrency || 4
+      },
+      (err) => {
+        if (err) {
+          console.error("Quagga init error:", err);
+          alert("Camera access failed");
+          setScanning(false);
+          return;
+        }
+        Quagga.start();
+      }
+    );
+  };
+
+  useEffect(() => {
+    const onDetected = (result) => {
+      const code = result?.codeResult?.code;
+      if (!code) return;
+
+      setStudentId(code);
+      console.log("Barcode detected:", code);
+
+      Quagga.stop();
+      setScanning(false);
+    };
+
+    Quagga.onDetected(onDetected);
+
+    return () => {
+      Quagga.offDetected(onDetected);
+      Quagga.stop();
+    };
+  }, []);
+
+  return (
+    <div style={{ padding: "30px" }}>
+      <h2>Barcode Scanner (Laptop / External Camera)</h2>
+
+      <input
+        type="text"
+        value={studentId}
+        placeholder="Scanned Barcode"
+        readOnly
+        style={{
+          fontSize: "18px",
+          padding: "8px",
+          width: "280px"
+        }}
+      />
+
+      <br /><br />
+
+      {!scanning && (
+        <button onClick={startScan} style={{ padding: "10px 20px" }}>
+          Start Scan
+        </button>
+      )}
+
+      {scanning && (
+        <div
+          ref={scannerRef}
+          style={{
+            width: "420px",
+            height: "320px",
+            border: "2px solid #333",
+            marginTop: "20px"
+          }}
+        />
+      )}
+    </div>
+  );
+}

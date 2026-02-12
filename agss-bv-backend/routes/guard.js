@@ -1,7 +1,14 @@
-const express = require('express');
+// routes/guard.js
+const express = require("express");
 const router = express.Router();
-const { registerGuard } = require('../controllers/guardController');
 
-router.post('/register', registerGuard);
+const { registerGuard } = require("../controllers/guardController");
+const { loginGuard } = require("../controllers/guardLoginControllers");
 
-module.exports = router;
+// Register Guard
+router.post("/register", registerGuard);
+
+// Login Guard
+router.post("/login", loginGuard);
+
+module.exports = router;

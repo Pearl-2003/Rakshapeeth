@@ -1,0 +1,6 @@
+path: dataset_plate
+train: images/train
+val: images/val
+
+nc: 1
+names: ['number_plate']

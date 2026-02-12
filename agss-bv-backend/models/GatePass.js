@@ -1,49 +1,54 @@
-// models/gatePass.js
+// models/GatePass.js
 const mongoose = require("mongoose");
 
-const gatePassSchema = new mongoose.Schema({
-  student: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Student",       // Reference to Student collection
-    required: true
+const gatePassSchema = new mongoose.Schema(
+  {
+    studentId: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    // Snapshot only (NOT identity)
+    studentName: {
+      type: String,
+      trim: true
+    },
+
+    // Expected exit date (YYYY-MM-DD)
+    expectedExitDate: {
+      type: String,
+      required: true
+    },
+
+    // Expected exit time (HH:mm - 24 hour)
+    expectedExitTime: {
+      type: String,
+      required: true
+    },
+
+    // Gatepass lifecycle
+    status: {
+      type: String,
+      enum: ["ACTIVE", "USED", "EXPIRED"],
+      default: "ACTIVE"
+    },
+
+    usedAt: {
+      type: Date
+    },
+
+    notificationStatus: {
+      type: String,
+      enum: ["sent", "not sent"],
+      default: "not sent"
+    }
   },
+  { timestamps: true }
+);
 
-  studentId: {
-    type: String,
-    required: true,
-    trim: true
-  },
-
-  studentName: {
-    type: String,
-    required: true,
-    trim: true
-  },
-
-  expectedExitDate: {
-    type: String,          // e.g., "2025-11-06"
-    required: true
-  },
-
-  expectedExitTime: {
-    type: String,          // e.g., "15:30"
-    required: true
-  },
-
-  notificationStatus: {
-    type: String,
-    enum: ["sent", "not sent"],
-    default: "not sent"
-  },
-
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-
-}, { timestamps: true });
-
-// Optional: fast lookups
+// 🔥 Fast lookups during exit verification
 gatePassSchema.index({ studentId: 1, expectedExitDate: -1 });
 
-module.exports = mongoose.model("GatePass", gatePassSchema);
+module.exports =
+  mongoose.models.GatePass || mongoose.model("GatePass", gatePassSchema);

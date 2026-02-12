@@ -1,7 +1,9 @@
 // models/student.js
 const mongoose = require("mongoose");
 
-// Reusable sub-schema for address
+// -------------------------------------------
+// Address Sub-schema
+// -------------------------------------------
 const addressSchema = new mongoose.Schema({
   houseNo: { type: String, required: true },
   street: { type: String, required: true },
@@ -11,88 +13,119 @@ const addressSchema = new mongoose.Schema({
   country: { type: String, required: true }
 });
 
+// -------------------------------------------
+// Counter Schema for auto-increment studentId
+// -------------------------------------------
+const counterSchema = new mongoose.Schema({
+  key: { type: String, required: true, unique: true }, // e.g., "studentId"
+  count: { type: Number, default: 0 }
+});
+
+const Counter = mongoose.model("Counter", counterSchema);
+
+// -------------------------------------------
 // Main Student Schema
-const studentSchema = new mongoose.Schema({
-  studentId: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
-  },
+// -------------------------------------------
+const studentSchema = new mongoose.Schema(
+  {
+    student_id: {
+      type: String,
+      unique: true
+    },
 
-  firstName: {
-    type: String,
-    required: true,
-    trim: true
-  },
+    firstName: {
+      type: String,
+      required: true,
+      trim: true
+    },
 
-  lastName: {
-    type: String,
-    required: true,
-    trim: true
-  },
+    lastName: {
+      type: String,
+      required: true,
+      trim: true
+    },
 
-  personalEmail: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true
-  },
+    personalEmail: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true
+    },
 
-  collegeEmail: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true
-  },
+    collegeEmail: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true
+    },
 
-  irisData: {
-    type: mongoose.Schema.Types.Mixed,  
-    // Real use case:
-    // Option 1: base64 encoded cropped iris image
-    // Option 2: iris feature vector (Float32Array converted to JSON)
-    // Option 3: path/URL to stored image in cloud storage
-    required: true
-  },
+    irisData: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true
+    },
 
-  parentsEmail: {
-    type: [String],
-    required: true,
-    validate: {
-      validator: (emails) => emails.length > 0,
-      message: "At least one parent email is required."
+    parentsEmail: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: (emails) => emails.length > 0,
+        message: "At least one parent email is required."
+      }
+    },
+
+    rollNo: {
+      type: String,
+      required: true,
+      unique: true
+    },
+
+    course: {
+      type: String,
+      required: true
+    },
+
+    address: {
+      type: addressSchema,
+      required: true
+    },
+
+    parentRefs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Parent"
+      }
+    ],
+
+    currentStatus: {
+      type: String,
+      enum: ["inside", "outside"],
+      default: "inside"
     }
   },
+  { timestamps: true }
+);
 
-  rollNo: {
-    type: String,
-    required: true,
-    unique: true
-  },
+// -------------------------------------------
+// Auto-generate studentId before saving
+// Format: BTBTC23 + 3-digit counter
+// Example: BTBTC23001
+// -------------------------------------------
+studentSchema.pre("save", async function (next) {
+  if (this.studentId) return next(); // already assigned (updates)
 
-  course: {
-    type: String,
-    required: true
-  },
+  try {
+    const counter = await Counter.findOneAndUpdate(
+      { key: "studentId" },
+      { $inc: { count: 1 } },
+      { new: true, upsert: true }
+    );
 
-  address: {
-    type: addressSchema,
-    required: true
-  },
+    const num = String(counter.count).padStart(3, "0");
+    this.studentId = `BTBTC23${num}`;
 
-  // 👇 Reference link to parent model (for direct population)
-  parentRefs: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Parent"
-  }],
-
-  // 👇 For gate log mapping
-  currentStatus: {
-    type: String,
-    enum: ["inside", "outside"],
-    default: "inside"
+    next();
+  } catch (err) {
+    next(err);
   }
-
-}, { timestamps: true });
-
+});
 module.exports = mongoose.model("Student", studentSchema);

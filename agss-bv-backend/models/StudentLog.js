@@ -1,14 +1,39 @@
+// models/StudentLog.js
 const mongoose = require("mongoose");
 
 const studentLogSchema = new mongoose.Schema({
-  studentId: { type: String, required: true },
-  name: { type: String, required: true },
-  department: { type: String, required: true },
-  year: { type: String, required: true },
-  entryTime: { type: Date, default: Date.now },
-  exitTime: { type: Date },
-  status: { type: String, default: "inside" },
+  studentId: {
+    type: String,
+    required: true
+  },
+
+  studentName: {
+    type: String,
+    trim: true
+  },
+
+  entryDate: String,
+  entryTime: String,
+
+  exitDate: String,
+  exitTime: String,
+
+  status: {
+    type: String,
+    enum: ["inside", "outside"],
+    default: "inside"
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-// ✅ CommonJS export (matches your server.js)
+/* 🔥 Only ONE active entry allowed */
+studentLogSchema.index(
+  { studentId: 1 },
+  { unique: true, partialFilterExpression: { status: "inside" } }
+);
+
 module.exports = mongoose.model("StudentLog", studentLogSchema);

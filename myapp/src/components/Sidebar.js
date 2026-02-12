@@ -79,9 +79,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
         {[
           { name: "Login", icon: "🔐", path: "/login" },
           { name: "Pre-Visit Form", icon: "📝", path: "/pre-visit" },
-          { name: "Feedback", icon: "💬", path: "/feedback" },
-          { name: "Settings", icon: "⚙️", path: "/settings" },
-          { name: "Logout", icon: "🚪", path: "/logout" },
+          { name: "Feedback", icon: "💬", path: "/feedback" }
         ].map((item) => (
           <Link
             key={item.name}

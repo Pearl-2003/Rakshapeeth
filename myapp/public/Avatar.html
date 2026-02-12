@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Avatar</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #fff7ee;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #7B3F00;
+        }
+
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 4px solid transparent;
+        }
+
+        .avatar:hover {
+            transform: scale(1.07);
+        }
+
+        .selected {
+            border-color: #8B4513; /* Brown highlight */
+            transform: scale(1.1);
+        }
+
+        button {
+            margin-top: 25px;
+            padding: 12px 22px;
+            background: #8B4513;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Select Your Avatar</h2>
+
+    <div class="avatar-grid" id="avatarGrid"></div>
+
+    <button onclick="saveAvatar()">Save Avatar</button>
+
+    <script>
+       const avatars = [
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/1.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/2.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/3.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/4.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/5.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/6.png",
+
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/1.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/2.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/3.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/4.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/5.png",
+  "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/6.png"
+];
+
+
+        const grid = document.getElementById("avatarGrid");
+        let selectedAvatar = localStorage.getItem("avatar") || null;
+
+        // Generate avatar buttons
+        avatars.forEach(url => {
+            const img = document.createElement("img");
+            img.src = url;
+            img.classList.add("avatar");
+
+            if (selectedAvatar === url) {
+                img.classList.add("selected");
+            }
+
+            img.onclick = () => {
+                document.querySelectorAll(".avatar").forEach(a => a.classList.remove("selected"));
+                img.classList.add("selected");
+                selectedAvatar = url;
+            };
+
+            grid.appendChild(img);
+        });
+
+        function saveAvatar() {
+            if (!selectedAvatar) {
+                alert("Please select an avatar!");
+                return;
+            }
+            localStorage.setItem("avatar", selectedAvatar);
+            alert("Avatar saved successfully!");
+            window.location.href = "dashboard.html";
+        }
+    </script>
+</body>
+</html>

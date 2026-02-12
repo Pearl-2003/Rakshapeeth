@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import gateImg from "../assets/gate.png";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import HeaderNavbar from "../components/HeaderNavbar";
 import Sidebar from "../components/Sidebar";
@@ -58,9 +59,11 @@ export default function HomePage() {
           <p className="text-xl md:text-2xl">
             Automated Gate Security System for Banasthali Vidyapith
           </p>
+          <Link to="/login">
           <button className="px-8 py-4 bg-gradient-to-r from-brown to-brown/80 text-cream rounded-full font-semibold hover:scale-105 hover:shadow-xl transition-all duration-500">
             Get Started
           </button>
+          </Link>
         </div>
 
         {/* Features / Info Cards */}

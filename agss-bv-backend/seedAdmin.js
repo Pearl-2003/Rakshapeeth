@@ -6,15 +6,20 @@ const Admin = require("./models/Admin");
 (async () => {
   await connectDB();
 
-  const hashedPassword = await bcrypt.hash("admin123", 10); // 🔒 secure
+  const existingAdmin = await Admin.findOne({ email: "admin@agssbv.com" });
 
-  await Admin.create({
-    name: "System Admin",
-    email: "admin@agssbv.com",
-    phone: "9876543210",
-    password: hashedPassword
-  });
+  if (existingAdmin) {
+    console.log("ℹ️ Admin already exists in database.");
+  } else {
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+    await Admin.create({
+      name: "System Admin",
+      email: "admin@agssbv.com",
+      phone: "9876543210",
+      password: hashedPassword
+    });
+    console.log("✅ Admin user inserted successfully");
+  }
 
-  console.log("✅ Admin user inserted successfully");
   process.exit();
 })();
