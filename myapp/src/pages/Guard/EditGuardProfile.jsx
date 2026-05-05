@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import { useTranslation } from "react-i18next";
 export default function EditGuardProfile({ guard, onClose, onUpdated }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     firstName: guard.firstName,
     lastName: guard.lastName,
@@ -15,7 +16,7 @@ export default function EditGuardProfile({ guard, onClose, onUpdated }) {
 
   const save = () => {
     if (newPassword && newPassword !== confirmPassword) {
-      setMessage("Passwords do not match");
+      setMessage(t("passwordsDoNotMatch"));
       return;
     }
 
@@ -32,15 +33,15 @@ export default function EditGuardProfile({ guard, onClose, onUpdated }) {
       )
       .then(res => {
         onUpdated(res.data.guard);
-        setMessage("Profile updated successfully");
+        setMessage(t("profileUpdated"));
       })
-      .catch(() => setMessage("Update failed"));
+      .catch(() => setMessage(t("updateFailed")));
   };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-3xl p-10 w-full max-w-lg">
-        <h3 className="text-2xl font-semibold mb-6">Edit Guard Profile</h3>
+        <h3 className="text-2xl font-semibold mb-6">{t("editGuardProfile")}</h3>
 
         {["firstName", "lastName", "phone", "email"].map(field => (
           <input
@@ -49,14 +50,14 @@ export default function EditGuardProfile({ guard, onClose, onUpdated }) {
             onChange={e =>
               setForm({ ...form, [field]: e.target.value })
             }
-            placeholder={field}
+            placeholder={t(field)}
             className="w-full border px-4 py-3 rounded mb-4"
           />
         ))}
 
         <input
           type="password"
-          placeholder="New Password (optional)"
+          placeholder={t("newPassword")}
           value={newPassword}
           onChange={e => setNewPassword(e.target.value)}
           className="w-full border px-4 py-3 rounded mb-3"
@@ -64,7 +65,7 @@ export default function EditGuardProfile({ guard, onClose, onUpdated }) {
 
         <input
           type="password"
-          placeholder="Confirm Password"
+          placeholder={t("confirmPassword")}
           value={confirmPassword}
           onChange={e => setConfirmPassword(e.target.value)}
           className="w-full border px-4 py-3 rounded mb-4"
@@ -74,13 +75,13 @@ export default function EditGuardProfile({ guard, onClose, onUpdated }) {
 
         <div className="flex gap-4">
           <button onClick={onClose} className="flex-1 border py-2 rounded">
-            Cancel
+            {t("cancel")}
           </button>
           <button
             onClick={save}
             className="flex-1 bg-[#7B4B2A] text-white py-2 rounded"
           >
-            Save Changes
+            {t("saveChanges")}
           </button>
         </div>
       </div>

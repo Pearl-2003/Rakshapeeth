@@ -69,7 +69,7 @@ export default function AdminAlertsCenter() {
           <p><b>Vehicle No:</b> ${alert.vehicleNo}</p>
           <p><b>Type:</b> ${alert.alertType}</p>
           <p><b>Reason:</b> ${alert.reason}</p>
-          <p><b>Guard ID:</b> ${alert.guardId}</p>
+          <p><b>Guard ID:</b> ${alert.raisedBy?.guardId}</p>
           <p><b>Time:</b> ${new Date(alert.createdAt).toLocaleString()}</p>
         `,
         width: 500

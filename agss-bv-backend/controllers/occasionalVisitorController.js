@@ -27,18 +27,28 @@ const getOccasionalVisitors = async (req, res) => {
     /* 🔍 SEARCH */
     if (search) {
       filter.$or = [
-        { visitorName: { $regex: search, $options: "i" } },
-        { phoneNumber: { $regex: search, $options: "i" } },
-        { vehicleNo: { $regex: search, $options: "i" } },
-        { reason: { $regex: search, $options: "i" } }
-      ];
+  { visitorName: { $regex: search, $options: "i" } },
+  { phoneNumber: { $regex: search, $options: "i" } },
+  { vehicleNo: { $regex: search, $options: "i" } },
+  { reason: { $regex: search, $options: "i" } },
+
+  // ⭐ NEW (Public Transport)
+  { driverName: { $regex: search, $options: "i" } },
+  { driverPhone: { $regex: search, $options: "i" } },
+  { driverVehicleNumber: { $regex: search, $options: "i" } }
+];
     }
 
     /* 🔽 VISITOR TYPE FILTER */
     if (visitorType) {
       filter.visitorType = visitorType;
     }
-
+    if (req.query.vehicleType) {
+  filter.vehicleType = req.query.vehicleType;
+}
+if (req.query.publicOnly === "true") {
+  filter.vehicleType = "Public";
+}
     /* 🚗 VEHICLE PRESENCE FILTER */
     if (hasVehicle === "yes") {
       filter.vehicleNo = { $exists: true, $ne: "" };
@@ -75,8 +85,18 @@ const getOccasionalVisitors = async (req, res) => {
       data: visitors
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+  if (err.name === "ValidationError") {
+    return res.status(400).json({
+      success: false,
+      message: err.message
+    });
   }
+
+  return res.status(500).json({
+    success: false,
+    message: "Server Error"
+  });
+}
 };
 
 /**

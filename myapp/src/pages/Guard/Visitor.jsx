@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import HeaderNavbar from "../../components/HeaderNavbar3";
 import Sidebar2 from "../../components/Sidebar2";
 import Footer from "../../components/Footer";
-
+import { useTranslation } from "react-i18next";
 export default function TodayVisitors() {
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [visitors, setVisitors] = useState([]);
-
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [visitorType, setVisitorType] = useState("");
 
@@ -43,10 +44,10 @@ export default function TodayVisitors() {
           {/* Page Header */}
           <div className="mb-10">
             <h1 className="text-3xl md:text-4xl font-bold text-brown-800">
-              Today’s Visitors
+              {t("todaysVisitors")}
             </h1>
             <p className="text-gray-600 mt-2">
-              Showing only visitors scheduled for today. Past and future entries are hidden for security.
+              {t("todayVisitorsSubtitle")}
             </p>
           </div>
 
@@ -54,7 +55,7 @@ export default function TodayVisitors() {
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-10 flex flex-col md:flex-row gap-4 items-center">
             <input
               type="text"
-              placeholder="Search by name, phone, vehicle or reason"
+              placeholder={t("searchVisitors")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 px-4 py-3 rounded-full border border-brown-300 focus:ring-2 focus:ring-brown-500 outline-none"
@@ -65,16 +66,16 @@ export default function TodayVisitors() {
               onChange={(e) => setVisitorType(e.target.value)}
               className="px-6 py-3 rounded-full border border-brown-300 bg-[#f9f4ef] focus:outline-none"
             >
-              <option value="">All Visitors</option>
-              <option value="Parent">Parent</option>
-              <option value="Non-Parent">Non-Parent</option>
+              <option value="">{t("allVisitors")}</option>
+              <option value="Parent">{t("parent")}</option>
+              <option value="Non-Parent">{t("nonParent")}</option>
             </select>
           </div>
 
           {/* Visitor Cards */}
           {visitors.length === 0 ? (
             <div className="text-center text-gray-500 mt-20">
-              No visitors scheduled for today.
+              {t("noVisitorsToday")}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -94,32 +95,32 @@ export default function TodayVisitors() {
                           : "bg-blue-100 text-blue-700"
                       }`}
                     >
-                      {v.visitorType}
+                      {t(v.visitorType)}
                     </span>
                   </div>
 
                   <div className="space-y-2 text-gray-700 text-sm">
                     <p>
-                      <span className="font-semibold">Phone:</span>{" "}
+                      <span className="font-semibold">{t("phone")}:</span>{" "}
                       {v.phoneNumber}
                     </p>
                     <p>
-                      <span className="font-semibold">Vehicle:</span>{" "}
+                      <span className="font-semibold">{t("vehicle")}:</span>{" "}
                       {v.vehicleNo || "—"}
                     </p>
                     <p>
-                      <span className="font-semibold">Companions:</span>{" "}
+                      <span className="font-semibold">{t("companions")}:</span>{" "}
                       {v.noOfCompanions}
                     </p>
                     <p>
-                      <span className="font-semibold">Reason:</span>{" "}
+                      <span className="font-semibold">{t("reason")}:</span>{" "}
                       {v.reason}
                     </p>
                   </div>
 
                   <div className="mt-6 flex justify-end">
                     <button className="px-4 py-2 bg-brown-700 text-white rounded-md hover:bg-brown-800">
-                      Allow Entry
+                     {t("allowEntry")}
                     </button>
                   </div>
                 </div>

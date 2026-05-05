@@ -1,4 +1,14 @@
+
 const mongoose = require("mongoose");
+
+const companionSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  phone: {
+  type: String,
+  required: true,
+  match: [/^[0-9]{10}$/, "Phone number must be exactly 10 digits"]
+}
+}, { _id: false });
 
 const requestSchema = new mongoose.Schema(
   {
@@ -30,6 +40,12 @@ const requestSchema = new mongoose.Schema(
       trim: true
     },
 
+    vehicleType: {
+      type: String,
+      enum: ["Private", "Public", "None"],
+      default: "None"
+    },
+
     vehicleNumber: {
       type: String,
       trim: true,
@@ -41,14 +57,34 @@ const requestSchema = new mongoose.Schema(
     },
 
     dateOfVisit: {
-      type: String,
+      type: Date,
       required: true
     },
 
     numberOfPeople: {
       type: Number,
       required: true,
-      min: 1
+      min: 0
+    },
+    driverName: {
+  type: String,
+  trim: true
+},
+
+driverPhone: {
+  type: String,
+  match: [/^\d{10}$/, "Driver phone must be 10 digits"]
+},
+
+driverVehicleNumber: {
+  type: String,
+  trim: true,
+  uppercase: true
+},
+    
+    companions: {
+      type: [companionSchema],
+      default: []
     },
 
     // 🔥 REQUEST TABLE IS ONLY FOR "OTHER"
@@ -64,12 +100,12 @@ const requestSchema = new mongoose.Schema(
       trim: true
     },
 
-    phoneNumber: {
-      type: String,
-      required: true,
-      trim: true,
-      match: [/^[0-9]{6,15}$/, "Invalid phone number"]
-    },
+   phoneNumber: {
+  type: String,
+  required: true,
+  trim: true,
+  match: [/^\d{10}$/, "Phone number must be exactly 10 digits"]
+},
 
     type: {
       type: String,
@@ -85,7 +121,23 @@ const requestSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+requestSchema.pre("validate", function (next) {
+  if (this.vehicleType === "Public") {
+    if (!this.driverName) {
+      return next(new Error("Driver name is required for public transport"));
+    }
 
+    if (!this.driverPhone || !/^\d{10}$/.test(this.driverPhone)) {
+      return next(new Error("Valid 10-digit driver phone is required"));
+    }
+
+    if (!this.driverVehicleNumber) {
+      return next(new Error("Driver vehicle number is required"));
+    }
+  }
+
+  next();
+});
 // Index for admin dashboard
 requestSchema.index({ dateOfVisit: -1, status: 1 });
 

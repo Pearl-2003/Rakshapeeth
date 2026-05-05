@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import Logo from "../assets/logo.png";
-
+import { useTranslation } from "react-i18next";
 import HeaderNavbar from "../components/HeaderNavbar";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 
 export default function CustomerCarePage() {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openIndex, setOpenIndex] = useState(null);
 
@@ -13,49 +14,40 @@ export default function CustomerCarePage() {
     setOpenIndex(openIndex === index ? null : index);
   };
 
-  const faqs = [
+    const faqs = [
     {
-      question: "How do I register on the website?",
-      answer:
-        "To register, visit the Register page and fill in the required details. Once submitted, your account will be verified and activated. If you face issues, ensure you have a stable internet connection or contact Customer Care."
+      question: t("faq1q"),
+      answer: t("faq1a")
     },
     {
-      question: "How do I log in if I’m facing issues?",
-      answer:
-        "Use the Login page with your registered credentials. If login fails, double-check your username and password, or use the 'Forgot Password' option. Persistent issues may be due to cache or network problems."
+      question: t("faq2q"),
+      answer: t("faq2a")
     },
     {
-      question: "How do I fill out the Pre-Visit Form, and what should I do if it doesn’t work?",
-      answer:
-        "The Pre-Visit Form is on both the Visitor and Parent pages. Fill all details and submit. If it doesn’t load, it may be a network issue — please contact Customer Care."
+      question: t("faq3q"),
+      answer: t("faq3a")
     },
     {
-      question: "What should I do if there’s a problem with the iris scan or number plate scanning system?",
-      answer:
-        "Check that the scanning device is clean, connected, and aligned. If issues persist, contact Technical Support via Customer Care."
+      question: t("faq4q"),
+      answer: t("faq4a")
     },
     {
-      question: "How can I send an alert to the admin?",
-      answer:
-        "Authorized users can send alerts to the admin from their dashboard. If your alert isn’t sending, verify your connection and contact support."
+      question: t("faq5q"),
+      answer: t("faq5a")
     },
     {
-      question: "What should I do if there’s an issue with the parent notification system?",
-      answer:
-        "If parents aren’t receiving notifications, verify their contact info and your connection. If the issue continues, report it via Customer Care."
+      question: t("faq6q"),
+      answer: t("faq6a")
     },
     {
-      question: "Who are authorized users, and what are their responsibilities?",
-      answer:
-        "Authorized users include admin, parents, and daily visitors. They must protect their credentials and report suspicious activity."
+      question: t("faq7q"),
+      answer: t("faq7a")
     },
     {
-      question: "How can I view expected visitors?",
-      answer:
-        "Guards and authorized staff can view expected visitors under the 'View Visitors' option in the Guard Page sidebar."
+      question: t("faq8q"),
+      answer: t("faq8a")
     }
   ];
-
   return (
     <div className="font-sans bg-gradient-to-b from-cream to-cream/90 relative">
       {/* Header + Navbar */}
@@ -74,9 +66,9 @@ export default function CustomerCarePage() {
 
       {/* Hero Section */}
       <header className="bg-brown text-cream text-center py-16 shadow-lg">
-        <h1 className="text-5xl font-extrabold mb-2 tracking-wide">Customer Care</h1>
+        <h1 className="text-5xl font-extrabold mb-2 tracking-wide">{t("customerCare")}</h1>
         <p className="text-lg max-w-2xl mx-auto text-cream/80">
-          Welcome to Rakshapeeth’s Customer Care page. Find solutions to common questions and get instant assistance.
+          {t("customerCareDesc")}
         </p>
       </header>
 

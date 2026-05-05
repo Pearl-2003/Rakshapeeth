@@ -6,15 +6,29 @@ import { Link } from "react-router-dom";
 import HeaderNavbar from "../components/HeaderNavbar";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
+import { useTranslation } from "react-i18next";
+import Keyboard from "react-simple-keyboard";
+import "react-simple-keyboard/build/css/index.css";
 
+const hindiLayout = {
+  default: [
+    "१ २ ३ ४ ५ ६ ७ ८ ९ ० {bksp}",
+    "क ख ग घ ङ च छ ज झ ञ",
+    "ट ठ ड ढ ण त थ द ध न",
+    "प फ ब भ म य र ल व",
+    "श ष स ह",
+    "ा ि ी ु ू े ै ो ौ ं ः",
+    "{space} {del}"
+  ]
+};
+const display = {
+  "{bksp}": "⌫",
+  "{del}": "DEL",
+  "{space}": "SPACE"
+};
 const MySwal = withReactContent(Swal);
 
-const countryOptions = [
-  { code: "+91", name: "India" },
-  { code: "+1", name: "USA" },
-  { code: "+44", name: "UK" },
-  { code: "+61", name: "Australia" },
-];
+
 
 // validation helpers
 // name validation: only alphabets and single spaces between words
@@ -24,7 +38,7 @@ function validateName(name) {
 
   // allows: "Rahul", "Ankit Kumar"
   // disallows: "Rahul123", "Ankit@Kumar", "Ankit__"
-  const re = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+  const re = /^[A-Za-z\u0900-\u097F]+(?: [A-Za-z\u0900-\u097F]+)*$/;
   return re.test(trimmed);
 }
 
@@ -35,7 +49,7 @@ function validateEmail(email) {
 }
 function validatePhone(phone) {
   const digits = phone.replace(/\D/g, "");
-  return digits.length >= 6 && digits.length <= 15 && /^\d+$/.test(digits);
+  return /^[6-9]\d{9}$/.test(digits);
 }
 function passwordRules(password) {
   const rules = {
@@ -65,13 +79,25 @@ const Icon = ({ ok }) =>
   );
 
 export default function GuardRegister() {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+const [activeInput, setActiveInput] = useState(null);
 
+const { i18n } = useTranslation();
+const isHindi = i18n.language === "hi";
   const registerRef = useRef(null);
   const moreRef = useRef(null);
+  const onKeyboardChange = (input) => {
+  if (!activeInput) return;
 
+  setFormData((prev) => ({
+    ...prev,
+    [activeInput]: input
+  }));
+};
   useEffect(() => {
     function handleClickOutside(event) {
       if (registerRef.current && !registerRef.current.contains(event.target)) setRegisterOpen(false);
@@ -87,9 +113,17 @@ export default function GuardRegister() {
   gender: "",          // ✅ ADDED
   email: "",
   password: "",
-  countryCode: "+91",
+  
   phone: "",
 });
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value
+  }));
+};
 
   const [touched, setTouched] = useState({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -108,12 +142,6 @@ export default function GuardRegister() {
   passwordValid &&
   phoneValid &&
   emailValid;
-
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((s) => ({ ...s, [name]: value }));
-  };
 
   const handleBlur = (e) => {
     setTouched((s) => ({ ...s, [e.target.name]: true }));
@@ -143,7 +171,7 @@ export default function GuardRegister() {
     setSubmitAttempted(true);
 
     if (!formValid) {
-      showError("Fix required fields", "Please fill all required fields correctly before submitting.");
+     showError(t("fixFields"), t("fillCorrect"));
       return;
     }
 
@@ -232,8 +260,8 @@ MySwal.fire({
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="flex-grow w-full max-w-5xl mx-auto px-6 py-16 text-brown">
-        <h2 className="text-4xl md:text-5xl mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E] font-extrabold tracking-wide leading-relaxed pb-2">
-          Guard Registration Form
+        <h2 className="text-4xl md:text-5xl mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E] font-extrabold tracking-wide leading-relaxed pt-2 pb-2">
+          {t("guardRegistration")}
         </h2>
 
         <form
@@ -244,76 +272,96 @@ MySwal.fire({
           {/* First Name */}
           <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>First Name <span className="text-red-600">*</span></span>
+              <span>{t("firstName")} <span className="text-red-600">*</span></span>
               <Icon ok={firstNameValid} />
             </div>
             <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              required
-              className={`w-full px-4 py-3 rounded-xl border ${ (touched.firstName || submitAttempted) && formData.firstName.trim().length === 0 ? "border-red-500" : "border-brown/50" } focus:outline-none focus:ring-2 focus:ring-brown/70`}
-            />
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={(e) => {
+                const value = e.target.value.replace(/[^A-Za-z\u0900-\u097F ]/g, "");
+                setFormData((prev) => ({
+                  ...prev,
+                  firstName: value
+                }));
+              }}
+                onBlur={handleBlur}
+                onFocus={() => {
+                  setActiveInput("firstName");
+                  if (isHindi) setShowKeyboard(true);
+                }}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-brown/50"
+              />
             {(touched.firstName || submitAttempted) && formData.firstName.trim().length === 0 && (
-              <p className="text-red-600 text-sm mt-1">First name is required.</p>
+              <p className="text-red-600 text-sm mt-1">{t("firstNameRequired")}</p>
             )}
           </label>
 
           {/* Last Name */}
           <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>Last Name <span className="text-red-600">*</span></span>
+              <span>{t("lastName")} <span className="text-red-600">*</span></span>
               <Icon ok={lastNameValid} />
             </div>
             <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              required
-              className={`w-full px-4 py-3 rounded-xl border ${ (touched.lastName || submitAttempted) && formData.lastName.trim().length === 0 ? "border-red-500" : "border-brown/50" } focus:outline-none focus:ring-2 focus:ring-brown/70`}
-            />
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={(e) => {
+                const value = e.target.value.replace(/[^A-Za-z\u0900-\u097F ]/g, "");
+                setFormData((prev) => ({
+                  ...prev,
+                  firstName: value
+                }));
+              }}
+                onBlur={handleBlur}
+                onFocus={() => {
+                  setActiveInput("lastName");
+                  if (isHindi) setShowKeyboard(true);
+                }}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-brown/50"
+              />
             {(touched.lastName || submitAttempted) && formData.lastName.trim().length === 0 && (
-              <p className="text-red-600 text-sm mt-1">Last name is required.</p>
+              <p className="text-red-600 text-sm mt-1">{t("lastNameRequired")}</p>
             )}
           </label>
             {/* Gender */}
-<label className="relative">
-  <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-    <span>Gender <span className="text-red-600">*</span></span>
-    <Icon ok={formData.gender.length > 0} />
-  </div>
+          <label className="relative">
+            <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
+              <span>{t("gender")} <span className="text-red-600">*</span></span>
+              <Icon ok={formData.gender.length > 0} />
+            </div>
 
-  <select
-    name="gender"
-    value={formData.gender}
-    onChange={handleChange}
-    onBlur={handleBlur}
-    required
-    className={`w-full px-4 py-3 rounded-xl border ${
-      (touched.gender || submitAttempted) && !formData.gender
-        ? "border-red-500"
-        : "border-brown/50"
-    } focus:outline-none focus:ring-2 focus:ring-brown/70`}
-  >
-    <option value="">Select Gender</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-    <option value="Other">Other</option>
-  </select>
+          <select
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            required
+            className={`w-full px-4 py-3 rounded-xl border ${
+              (touched.gender || submitAttempted) && !formData.gender
+                ? "border-red-500"
+                : "border-brown/50"
+            } focus:outline-none focus:ring-2 focus:ring-brown/70`}
+          >
+            <option value="">{t("selectGender")}</option>
+            <option value="Male">{t("male")}</option>
+            <option value="Female">{t("female")}</option>
+            <option value="Other"> {t("other")}</option>
+          </select>
 
-  {(touched.gender || submitAttempted) && !formData.gender && (
-    <p className="text-red-600 text-sm mt-1">Gender is required.</p>
-  )}
-</label>
+          {(touched.gender || submitAttempted) && !formData.gender && (
+            <p className="text-red-600 text-sm mt-1">{t("genderRequired")}</p>
+          )}
+          </label>
 
           {/* Email (optional) */}
           <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>Email Address <span className="text-brown/60 text-xs">(optional)</span></span>
+              <span>{t("emailAddress")} <span className="text-brown/60 text-xs">(({t("optional")}))</span></span>
               <Icon ok={formData.email.length === 0 ? false : emailValid} />
             </div>
             <input
@@ -325,14 +373,14 @@ MySwal.fire({
               className={`w-full px-4 py-3 rounded-xl border ${ (touched.email || submitAttempted) && formData.email && !emailValid ? "border-red-500" : "border-brown/50" } focus:outline-none focus:ring-2 focus:ring-brown/70`}
             />
             {(submitAttempted && formData.email && !emailValid) && (
-              <p className="text-red-600 text-sm mt-1">Please enter a valid email address.</p>
+              <p className="text-red-600 text-sm mt-1">{t("validEmail")}</p>
             )}
           </label>
 
           {/* Password */}
           <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>Password <span className="text-red-600">*</span></span>
+              <span>{t("password")} <span className="text-red-600">*</span></span>
               <Icon ok={formData.password.length > 0 && passwordValid} />
             </div>
             <input
@@ -346,12 +394,20 @@ MySwal.fire({
               autoComplete="new-password"
             />
             <div className="mt-2 text-sm">
-              <div>Password strength: <strong>{["Very weak","Weak","Okay","Good","Strong"][pw.score]}</strong></div>
+              <div>{t("passwordStrength")} <strong>{[
+                t("veryWeak"),
+                t("weak"),
+                t("okay"),
+                t("good"),
+                t("strong")
+              ][pw.score]}</strong></div>
               <ul className="ml-4 list-disc text-brown/70">
-                <li className={pw.rules.length ? "text-green-700" : "text-red-600"}>Minimum 8 characters</li>
-                <li className={pw.rules.uppercase ? "text-green-700" : "text-red-600"}>At least one uppercase</li>
-                <li className={pw.rules.number ? "text-green-700" : "text-red-600"}>At least one number</li>
-                <li className={pw.rules.special ? "text-green-700" : "text-red-600"}>At least one special char</li>
+                <li className={pw.rules.length ? "text-green-600" : "text-red-500"}>
+                  {t("min8")}
+                </li>
+                <li  className={pw.rules.length ? "text-green-600" : "text-red-500"}>{t("oneUpper")}</li>
+                <li  className={pw.rules.length ? "text-green-600" : "text-red-500"}>{t("oneNumber")}</li>
+                <li  className={pw.rules.length ? "text-green-600" : "text-red-500"}>{t("oneSpecial")}</li>
               </ul>
             </div>
           </label>
@@ -359,36 +415,35 @@ MySwal.fire({
           {/* Phone */}
           <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>Phone Number <span className="text-red-600">*</span></span>
+              <span>{t("phoneNumber")} <span className="text-red-600">*</span></span>
               <Icon ok={formData.phone.length > 0 && phoneValid} />
             </div>
-            <div className="flex gap-3">
-              <select
-                name="countryCode"
-                value={formData.countryCode}
-                onChange={handleChange}
-                className="px-3 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70"
-              >
-                {countryOptions.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name} ({c.code})
-                  </option>
-                ))}
-              </select>
-
-              <input
+            <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
-                onChange={handleChange}
+                onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                setFormData((prev) => ({
+                  ...prev,
+                  phone: value
+                }));
+              }}
+              maxLength={10}
+                
                 onBlur={handleBlur}
-                placeholder="Enter phone number"
+                placeholder={t("enterPhone")}
                 required
-                className={`flex-1 px-4 py-3 rounded-xl border ${ (touched.phone || submitAttempted) && !phoneValid ? "border-red-500" : "border-brown/50" } focus:outline-none focus:ring-2 focus:ring-brown/70`}
+                className={`w-full px-4 py-3 rounded-xl border ${
+                  (touched.phone || submitAttempted) && !phoneValid
+                    ? "border-red-500"
+                    : "border-brown/50"
+                } focus:outline-none focus:ring-2 focus:ring-brown/70`}
+                
               />
-            </div>
+                          
             {(submitAttempted && !phoneValid) && (
-              <p className="text-red-600 text-sm mt-1">Please enter a valid phone number for the selected country code.</p>
+              <p className="text-red-600 text-sm mt-1">{t("validPhone")}</p>
             )}
           </label>
 
@@ -403,17 +458,38 @@ MySwal.fire({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                 </svg>
-                Registering...
-              </>
-            ) : (
-              "Register"
-            )}
+                 {t("registering")}
+                </>
+              ) : (
+                t("register")
+              )}
           </button>
         </form>
       </main>
 
-      <Footer />
+{showKeyboard && isHindi && (
+  <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl p-4 z-50">
+    <Keyboard
+      layout={hindiLayout}
+      display={display}
+      onChange={onKeyboardChange}
+      
+    />
 
+    <div className="flex justify-end mt-2">
+      <button
+        type="button"
+        onClick={() => setShowKeyboard(false)}
+        className="px-4 py-2 bg-brown text-white rounded-lg"
+      >
+        कीबोर्ड बंद करें
+      </button>
     </div>
+  </div>
+)}
+
+<Footer />
+
+</div>
   );
 }

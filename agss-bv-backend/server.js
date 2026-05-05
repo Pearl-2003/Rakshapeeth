@@ -146,6 +146,19 @@ app.use("/api/security-alerts", securityAlertRoutes);
 const vehicleAlertRoutes = require("./routes/vehicleAlerts");
 app.use("/api/vehicle-alerts", vehicleAlertRoutes);
 
+//forgot password
+const forgotPasswordRoutes = require("./routes/forgotpassword");
+app.use("/api/auth", forgotPasswordRoutes);
+
+const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
+app.use("/api/admin", adminDashboardRoutes);
+const dashboardRoutes = require("./routes/dashBoardAdminVehicleCountRoutes");
+app.use("/api/dashboard", dashboardRoutes);
+const dashboardExpectedVisitor = require("./routes/dashboardGuardExpectedVisitorRoutes");
+app.use("/api/dashboardExpectedVisitor", dashboardExpectedVisitor);
+const adminActivityRoutes = require("./routes/adminActivityRoutes");
+app.use("/api/admin", adminActivityRoutes);
+
 // ✅ LISTEN — always last
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`)); 
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));

@@ -1,37 +1,238 @@
-import React, { useState, useEffect } from "react";
+// src/pages/Admin/Dashboard.js
+import React, { useState, useEffect,useRef } from "react";
 import HeaderNavbar from "../../components/HeaderNavbar2";
 import Sidebar from "../../components/Sidebar1";
 import Footer from "../../components/Footer";
 import { jwtDecode } from "jwt-decode";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import API from "../../services/api";
+import AdminActivityChart from "../../components/AdminActivityChart.jsx";
+
 
 export default function AdminDashboard() {
 const [sidebarOpen, setSidebarOpen] = useState(false);
 const [adminName, setAdminName] = useState("");
+const [logsOpen, setLogsOpen] = useState(false);
+const logsRef = useRef(null);
+const navigate = useNavigate();
+const [dailyEntries, setDailyEntries] = useState(0);
+const [pendingRequests, setPendingRequests] = useState(0);
+const [activeTab, setActiveTab] = useState("requests");
+const [requestNotifications, setRequestNotifications] = useState([]);
+const [alertNotifications, setAlertNotifications] = useState([]);
+const [todayEntries, setTodayEntries] = useState(0);
+const [activityData, setActivityData] = useState([]);
 
+const fetchTodayEntries = async () => {
+  try {
+    const res = await API.get("http://localhost:5000/api/dashboard/today-entries");
+
+    console.log("Today entries API:", res.data);
+
+    setTodayEntries(res.data.count); // ✅ FIXED
+  } catch (error) {
+    console.error("Failed to fetch today entries", error);
+  }
+};
 
 useEffect(() => {
+    fetchTodayEntries(); // initial load
+
+  const interval = setInterval(() => {
+    fetchTodayEntries();
+  }, 5000); // refresh every 5 seconds
+
+  return () => clearInterval(interval);
+}, []);
+
+  // ✅ Live Active Guards
+  const [activeGuards, setActiveGuards] = useState(0);
+  // ✅ Fetch Active Guards (auto refresh every 5s)
+  useEffect(() => {
+    const fetchActiveGuards = async () => {
+  try {
+    const token = localStorage.getItem("adminToken");
+
+    if (!token) {
+      console.log("No admin token found");
+      return;
+    }
+
+
+    const res = await fetch("http://localhost:5000/api/admin/guard-duty/live", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.log("Response not OK:", res.status);
+      return;
+    }
+
+    const data = await res.json();
+
+    console.log("Live guards response:", data);
+
+    // If backend returns array directly
+    if (Array.isArray(data)) {
+      setActiveGuards(data.length);
+    }
+    // If backend returns { guards: [...] }
+    else if (data.guards && Array.isArray(data.guards)) {
+      setActiveGuards(data.guards.length);
+    } else {
+      setActiveGuards(0);
+    }
+  } catch (err) {
+    console.error("Failed to fetch active guards", err);
+  }
+};
+
+
+    fetchActiveGuards();
+    const interval = setInterval(fetchActiveGuards, 5000);
+    return () => clearInterval(interval);
+  }, []);
+useEffect(() => {
 const token = localStorage.getItem("adminToken");
+
 if (token) {
 try {
 const decoded = jwtDecode(token);
 setAdminName(decoded.name || "Admin");
 } catch {}
 }
+function handleClickOutside(event) {
+    if (logsRef.current && !logsRef.current.contains(event.target)) {
+      setLogsOpen(false);
+    }
+  }
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
 }, []);
-  const stats = [
-    { title: "Daily Entries", value: "1,248", delta: "+4.2%" },
-    { title: "Pending Requests", value: "18", delta: "-1" },
-    { title: "Active Guards", value: "12", delta: "+0" },
-    { title: "Vehicles Today", value: "76", delta: "+8%" },
-  ];
+useEffect(() => {
+  async function fetchDailyEntries() {
+    try {
+      const response = await fetch("http://localhost:4000/admin/daily-entries");
+      const data = await response.json();
 
-  const quickActions = [
-    { name: "Approve Requests", icon: "✅" },
-    { name: "Add to Whitelist", icon: "➕" },
-    { name: "Create Gatepass", icon: "⏳" },
-    { name: "Generate Report", icon: "📄" },
-  ];
+      console.log("API DATA:", data);   // 🔥 debug
+
+      if (response.ok) {
+        setDailyEntries(data.totalEntries);
+      }
+    } catch (err) {
+      console.error("Server error:", err);
+    }
+  }
+
+  fetchDailyEntries();
+}, []);
+useEffect(() => {
+  async function fetchPendingRequests() {
+    try {
+      const token = localStorage.getItem("adminToken");
+
+      const response = await fetch(
+        "http://localhost:5000/api/admin/requests/pending",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      console.log("Pending Requests API:", data); // 🔥 debug
+
+      if (response.ok) {
+        setPendingRequests(data.count);
+      } else {
+        console.error("Error:", data);
+      }
+    } catch (err) {
+      console.error("Server error:", err);
+    }
+  }
+
+  fetchPendingRequests();
+}, []);
+useEffect(() => {
+  async function fetchNotifications() {
+    try {
+      const token = localStorage.getItem("adminToken");
+
+      const response = await fetch(
+        "http://localhost:5000/api/admin/dashboard/notifications",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setRequestNotifications(data.requestNotifications || []);
+        setAlertNotifications(data.alertNotifications || []);
+      } else {
+        console.error("Notification fetch error:", data);
+      }
+
+    } catch (err) {
+      console.error("Server error:", err);
+    }
+  }
+
+  fetchNotifications();
+}, []);
+useEffect(() => {
+  async function fetchActivity() {
+    try {
+      const token = localStorage.getItem("adminToken");
+
+      const response = await fetch(
+        "http://localhost:5000/api/admin/dashboard/activity",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setActivityData(data.data);
+      }
+
+    } catch (err) {
+      console.error("Activity fetch error:", err);
+    }
+  }
+
+  fetchActivity();
+}, []);
+
+  const stats = [
+  { title: "Daily Entries", value: dailyEntries.toLocaleString() },
+{ title: "Pending Requests", value: pendingRequests.toString() },
+  { title: "Active Guards", value: activeGuards },
+    { title: "Vehicles Today", value: todayEntries },
+];
+
+ const quickActions = [
+  { name: "Handle Requests", icon: "✅", path: "/admin/requests" },
+  { name: "Campus Activity", icon: "📊", path: "/admin/system-activity" },
+  { name: "Create Gatepass", icon: "⏳", path: "/admin/create-gatepass" },
+  { name: "Monitor Guards", icon: "🛡️", path: "/admin/monitor-guard" },
+];
+
 
   const recentLogs = [
     { id: 1, person: "S. Sharma", type: "Student Exit", time: "10:24 AM" },
@@ -62,7 +263,52 @@ setAdminName(decoded.name || "Admin");
                 <span className="font-semibold">{new Date().toLocaleDateString()}</span>
               </div>
 
-              <button className="px-4 py-2 bg-[#7B4B2A] text-cream rounded-full shadow-lg hover:scale-105 transition transform">New Alert</button>
+              <div className="relative" ref={logsRef}>
+  <button
+    onClick={() => setLogsOpen(!logsOpen)}
+    className="px-5 py-2 bg-[#7B4B2A] text-cream rounded-full shadow-lg 
+               hover:scale-105 hover:shadow-xl transition-all duration-300 
+               flex items-center gap-2"
+  >
+    Logs
+    <span className={`transition-transform duration-300 ${logsOpen ? "rotate-180" : ""}`}>
+      ▼
+    </span>
+  </button>
+
+  {/* Dropdown */}
+  {logsOpen && (
+    <motion.div
+      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl 
+                 border border-cream/40 overflow-hidden z-50"
+    >
+      <button
+  onClick={() => navigate("/admin/view-student-log")}
+  className="w-full text-left px-5 py-3 hover:bg-cream/50 
+             transition flex items-center gap-2 text-brown"
+>
+  🎓 Student Logs
+</button>
+
+
+      <div className="h-px bg-cream/60 mx-3"></div>
+
+      <button
+  onClick={() => navigate("/admin/vehicle-logs")}
+  className="w-full text-left px-5 py-3 hover:bg-cream/50 
+             transition flex items-center gap-2 text-brown"
+>
+  🚗 Vehicle Logs
+</button>
+
+    </motion.div>
+  )}
+</div>
+
             </div>
           </div>
         </motion.header>
@@ -92,11 +338,12 @@ setAdminName(decoded.name || "Admin");
               </div>
 
               {/* Simple sparkline */}
-              <svg viewBox="0 0 200 50" className="w-full h-16" preserveAspectRatio="none">
-                <polyline fill="none" stroke="#7B4B2A" strokeWidth="3" points="0,30 20,28 40,18 60,22 80,12 100,20 120,10 140,14 160,8 180,12 200,6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <div className="w-full h-72">
+  <AdminActivityChart data={activityData} />
+</div>
 
-              <div className="mt-4 text-sm text-brown/60">Smooth live overview of entries, exits and vehicle passes.</div>
+
+              {/* <div className="mt-4 text-sm text-brown/60">Smooth live overview of entries, exits and vehicle passes.</div> */}
             </motion.div>
           </div>
 
@@ -105,7 +352,12 @@ setAdminName(decoded.name || "Admin");
               <h4 className="font-semibold mb-3">Quick Actions</h4>
               <div className="grid grid-cols-2 gap-3">
                 {quickActions.map((q, idx) => (
-                  <button key={idx} className="flex items-center gap-2 p-3 bg-cream/60 rounded-xl hover:scale-105 transition transform">
+                  <button
+  key={idx}
+  onClick={() => navigate(q.path)}
+  className="flex items-center gap-2 p-3 bg-cream/60 rounded-xl hover:scale-105 transition transform"
+>
+
                     <span>{q.icon}</span>
                     <span className="text-sm font-medium">{q.name}</span>
                   </button>
@@ -114,69 +366,127 @@ setAdminName(decoded.name || "Admin");
             </motion.div>
 
             <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-2xl p-4 shadow-xl">
-              <h4 className="font-semibold mb-3">Notifications</h4>
-              <div className="space-y-2 text-sm text-brown/70">
-                <div className="p-2 bg-cream/30 rounded">New exit request from S. Sharma</div>
-                <div className="p-2 bg-cream/30 rounded">Vehicle whitelist updated</div>
-                <div className="p-2 bg-cream/30 rounded">Guard G. Singh marked absent</div>
-              </div>
+              <h4 className="font-semibold text-lg mb-4">Notifications</h4>
+
+{/* Segmented Control */}
+<div className="relative flex bg-cream/40 rounded-full p-1 mb-4">
+  {/* Sliding Indicator */}
+  <motion.div
+    layout
+    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+    className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-[#7B4B2A] shadow-md`}
+    style={{
+      left: activeTab === "requests" ? "4px" : "50%",
+      right: activeTab === "alerts" ? "4px" : "50%",
+    }}
+  />
+
+  {/* Requests Tab */}
+  <button
+    onClick={() => setActiveTab("requests")}
+    className={`relative z-10 flex-1 py-2 text-sm font-semibold transition ${
+      activeTab === "requests"
+        ? "text-cream"
+        : "text-brown/70"
+    }`}
+  >
+    Requests
+    {requestNotifications.length > 0 && (
+      <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+        {requestNotifications.length}
+      </span>
+    )}
+  </button>
+
+  {/* Alerts Tab */}
+  <button
+    onClick={() => setActiveTab("alerts")}
+    className={`relative z-10 flex-1 py-2 text-sm font-semibold transition ${
+      activeTab === "alerts"
+        ? "text-cream"
+        : "text-brown/70"
+    }`}
+  >
+    Alerts
+    {alertNotifications.length > 0 && (
+      <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+        {alertNotifications.length}
+      </span>
+    )}
+  </button>
+</div>
+
+{/* Notification List */}
+<div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+
+  {/* REQUESTS */}
+  {activeTab === "requests" && (
+    requestNotifications.length === 0 ? (
+      <div className="text-center text-brown/50 py-6">
+        📭 No pending requests today
+      </div>
+    ) : (
+      requestNotifications.map((n) => (
+        <motion.div
+          key={n.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.02 }}
+          className="p-3 rounded-xl bg-white/80 backdrop-blur-md shadow-md border border-cream/40 cursor-pointer transition"
+        >
+          <div className="text-sm font-medium text-brown">
+            {n.message}
+          </div>
+          <div className="text-xs text-brown/50 mt-1">
+            {new Date(n.time).toLocaleTimeString()}
+          </div>
+        </motion.div>
+      ))
+    )
+  )}
+
+  {/* ALERTS */}
+  {activeTab === "alerts" && (
+    alertNotifications.length === 0 ? (
+      <div className="text-center text-brown/50 py-6">
+        🚫 No alerts today
+      </div>
+    ) : (
+      alertNotifications.map((n) => (
+        <motion.div
+          key={n.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileHover={{ scale: 1.02 }}
+          className="p-3 rounded-xl bg-red-50 shadow-md border border-red-200 cursor-pointer transition"
+        >
+          <div className="text-sm font-medium text-red-700">
+            {n.message}
+          </div>
+          <div className="text-xs text-red-500 mt-1">
+            {new Date(n.time).toLocaleTimeString()}
+          </div>
+        </motion.div>
+      ))
+    )
+  )}
+
+</div>
+
             </motion.div>
           </aside>
         </section>
 
-        {/* Recent Logs + Activity Feed */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-          <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Recent Activity</h3>
-              <div className="text-sm text-brown/60">Showing latest 10</div>
-            </div>
-
-            <div className="divide-y divide-brown/10">
-              {recentLogs.map((log) => (
-                <div key={log.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{log.person}</div>
-                    <div className="text-sm text-brown/60">{log.type}</div>
-                  </div>
-                  <div className="text-sm text-brown/60">{log.time}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-xl">
-            <h3 className="font-semibold mb-4">System Health</h3>
-
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm text-brown/60 mb-1">Connection</div>
-                <div className="w-full bg-cream/30 rounded-full h-3">
-                  <div className="bg-[#7B4B2A] h-3 rounded-full w-3/4 transition-all" />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm text-brown/60 mb-1">Iris Scanner Uptime</div>
-                <div className="w-full bg-cream/30 rounded-full h-3">
-                  <div className="bg-[#7B4B2A] h-3 rounded-full w-11/12 transition-all" />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-sm text-brown/60 mb-1">ANPR Accuracy</div>
-                <div className="w-full bg-cream/30 rounded-full h-3">
-                  <div className="bg-[#7B4B2A] h-3 rounded-full w-4/5 transition-all" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Floating Action Button */}
-        <motion.button whileHover={{ scale: 1.05 }} className="fixed right-10 bottom-10 bg-[#7B4B2A] text-cream rounded-full px-5 py-3 shadow-2xl z-50 hover:rotate-3 transition transform">
-          ✚ Create Alert
-        </motion.button>
+        <motion.button
+  onClick={() => navigate("/admin/alerts")}
+  whileHover={{ scale: 1.05 }}
+  className="fixed right-10 bottom-10 bg-[#7B4B2A] text-cream rounded-full px-5 py-3 shadow-2xl z-50 hover:rotate-3 transition transform"
+>
+  🔔 New Alerts
+</motion.button>
+
       </main>
 
       <Footer />

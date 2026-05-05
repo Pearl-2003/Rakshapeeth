@@ -1,13 +1,44 @@
-import React, { useState } from "react";
 import Swal from "sweetalert2";
 import axios from "axios";
 import HeaderNavbar from "../../components/HeaderNavbar3";
 import Sidebar2 from "../../components/Sidebar2";
 import Footer from "../../components/Footer";
+import { useTranslation } from "react-i18next";
+import Keyboard from "react-simple-keyboard";
+import "react-simple-keyboard/build/css/index.css";
+import React, { useState, useEffect } from "react";
+const hindiLayout = {
+  default: [
+    "१ २ ३ ४ ५ ६ ७ ८ ९ ० {bksp}",
+    "क ख ग घ ङ च छ ज झ ञ",
+    "ट ठ ड ढ ण त थ द ध न",
+    "प फ ब भ म य र ल व",
+    "श ष स ह",
+    "ा ि ी ु ू े ै ो ौ ं ः",
+    "{space} {del}"
+  ]
+};
 
+const display = {
+  "{bksp}": "⌫",
+  "{del}": "DEL",
+  "{space}": "SPACE"
+};
 export default function ManualEntryForm() {
+  const { t,i18n } = useTranslation();
+const isHindi = i18n.language === "hi";
+useEffect(() => {
+  const savedLang = localStorage.getItem("language");
+  if (savedLang) {
+    i18n.changeLanguage(savedLang);
+  }
+}, [i18n]);
+const [showKeyboard, setShowKeyboard] = useState(false);
+const [activeInput, setActiveInput] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  const validateName = (name) => /^[A-Za-z\s]{3,50}$/.test(name.trim());
+  const validateVehicle = (vehicle) =>
+  /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,2}[0-9]{4}$/.test(vehicle.replace(/\s+/g, "").toUpperCase());
   const [formData, setFormData] = useState({
     name: "",
     phoneNo: "",
@@ -17,6 +48,15 @@ export default function ManualEntryForm() {
     reasonOfVisit: "",
     otherReason: ""
   });
+  const onKeyboardChange = (input) => {
+  if (!activeInput) return;
+
+  setFormData((prev) => ({
+    ...prev,
+    [activeInput]: input
+  }));
+  
+};
 
   /* ---------------- VALIDATIONS ---------------- */
   const validatePhone = (phone) => /^[0-9]{10}$/.test(phone);
@@ -29,90 +69,128 @@ export default function ManualEntryForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!formData.name.trim())
-      return Swal.fire("Missing Field", "Visitor name is required.", "error");
-
-    if (!validatePhone(formData.phoneNo))
-      return Swal.fire("Invalid Phone", "Enter a valid 10-digit phone number.", "error");
-
-    if (!formData.idProof)
-      return Swal.fire("Missing Field", "Please select an ID proof.", "error");
-
-    if (!formData.idProofNumber.trim())
-      return Swal.fire("Missing Field", "Please enter ID number.", "error");
-
-    if (formData.idProof === "Aadhaar" && !validateAadhaar(formData.idProofNumber))
-      return Swal.fire("Invalid Aadhaar", "Aadhaar must have 12 digits.", "error");
-
-    if (formData.idProof === "PAN" && !validatePAN(formData.idProofNumber))
-      return Swal.fire("Invalid PAN", "PAN format: ABCDE1234F.", "error");
-
-    if (formData.idProof === "DL" && !validateDL(formData.idProofNumber))
-      return Swal.fire("Invalid DL", "Invalid Driving License format.", "error");
-
-    if (!formData.reasonOfVisit)
-      return Swal.fire("Missing Field", "Please select a reason for visit.", "error");
-
-    if (
-      (formData.reasonOfVisit === "Other" ||
-        formData.reasonOfVisit === "Alumni") &&
-      !formData.otherReason.trim()
-    )
-      return Swal.fire("Missing Field", "Please specify the reason.", "error");
-
-    const payload = {
-      name: formData.name,
-      phoneNo: formData.phoneNo,
-      vehicleNo: formData.vehicleNo || null,
-      idProof: formData.idProof,
-      idProofNumber: formData.idProofNumber,
-      reasonOfVisit: formData.reasonOfVisit,
-      otherReason:
-        formData.reasonOfVisit === "Other" ||
-        formData.reasonOfVisit === "Alumni"
-          ? formData.otherReason
-          : ""
-    };
-
-    try {
-      const token = localStorage.getItem("guardToken");
-
-await axios.post(
-  "http://localhost:5000/api/manual-entry",
-  payload,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
+  // Visitor Name Validation
+  if (!formData.name.trim()) {
+    return Swal.fire(t("missingField"), t("visitorNameRequired"), "error");
   }
-);
+  // Vehicle validation if entered
+if (formData.vehicleNo && !validateVehicle(formData.vehicleNo)) {
+  return Swal.fire(t("invalidVehicle"), t("vehicleFormat"), "error");
+}
 
+// Name length validation
+if (!validateName(formData.name)) {
+  return Swal.fire(t("invalidName"), t("name3to50Chars"), "error");
+}
+  // Phone Validation
+  if (!validatePhone(formData.phoneNo)) {
+    return Swal.fire(t("invalidPhone"), t("valid10DigitPhone"), "error");
+  }
 
-      Swal.fire({
-        icon: "success",
-        title: "Entry Recorded",
-        text: "Manual visitor entry saved successfully.",
-        timer: 2000,
-        showConfirmButton: false
-      });
+  // ID Proof Validation
+  if (!formData.idProof) {
+    return Swal.fire(t("missingField"), t("selectIdProof"), "error");
+  }
 
-      setFormData({
-        name: "",
-        phoneNo: "",
-        vehicleNo: "",
-        idProof: "",
-        idProofNumber: "",
-        reasonOfVisit: "",
-        otherReason: ""
-      });
+  // ID Number Validation
+  if (!formData.idProofNumber.trim()) {
+    return Swal.fire(t("missingField"), t("enterIdNumber"), "error");
+  }
 
-    } catch (err) {
-      console.error(err);
-      Swal.fire("Error", "Failed to save manual entry.", "error");
-    }
+  // Aadhaar Validation
+  if (
+    formData.idProof === "Aadhaar" &&
+    !validateAadhaar(formData.idProofNumber)
+  ) {
+    return Swal.fire(t("invalidAadhaar"), t("aadhaar12Digits"), "error");
+  }
+
+  // PAN Validation
+  if (formData.idProof === "PAN" && !validatePAN(formData.idProofNumber)) {
+    return Swal.fire(t("invalidPan"), t("panFormat"), "error");
+  }
+
+  // Driving License Validation
+  if (formData.idProof === "DL" && !validateDL(formData.idProofNumber)) {
+    return Swal.fire(t("invalidDL"), t("invalidDLFormat"), "error");
+  }
+
+  // Visit Reason Validation
+  if (!formData.reasonOfVisit) {
+    return Swal.fire(t("missingField"), t("selectVisitReason"), "error");
+  }
+
+  // Other / Alumni Reason Validation
+  if (
+    (formData.reasonOfVisit === "Other" ||
+      formData.reasonOfVisit === "Alumni") &&
+    !formData.otherReason.trim()
+  ) {
+    return Swal.fire(t("missingField"), t("specifyReason"), "error");
+  }
+
+  // Payload
+  const payload = {
+    name: formData.name,
+    phoneNo: formData.phoneNo,
+    vehicleNo: formData.vehicleNo || null,
+    idProof: formData.idProof,
+    idProofNumber: formData.idProofNumber,
+    reasonOfVisit: formData.reasonOfVisit,
+    otherReason:
+      formData.reasonOfVisit === "Other" ||
+      formData.reasonOfVisit === "Alumni"
+        ? formData.otherReason
+        : ""
   };
+
+  try {
+    const token = localStorage.getItem("guardToken");
+
+    const res = await axios.post(
+      "http://localhost:5000/api/manual-entry",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    // Success Alert
+    Swal.fire({
+      icon: "success",
+      title: t("success"),
+      text: t("visitorEntrySuccess"),
+      timer: 2000,
+      showConfirmButton: false
+    });
+
+    // Reset Form
+    setFormData({
+      name: "",
+      phoneNo: "",
+      vehicleNo: "",
+      idProof: "",
+      idProofNumber: "",
+      reasonOfVisit: "",
+      otherReason: ""
+    });
+
+  } catch (error) {
+    console.error("Manual entry error:", error);
+
+    Swal.fire({
+      icon: "error",
+      title: t("error"),
+      text:
+        error.response?.data?.message ||
+        t("somethingWentWrong")
+    });
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f4efe9] to-[#ece1d6]">
@@ -137,52 +215,78 @@ await axios.post(
             {/* HEADER */}
             <div className="text-center space-y-3">
               <h2 className="text-4xl font-extrabold text-[#5C3A21]">
-                Manual Visitor Entry
+                {t("manualVisitorEntry")}
               </h2>
               <p className="text-gray-600 text-lg">
-                Guard-assisted entry for vehicles & walking visitors
+                {t("guardAssistedEntry")}
               </p>
               <div className="h-1 w-28 mx-auto bg-[#8B5E3C]/50 rounded-full" />
             </div>
 
             {/* VISITOR DETAILS */}
             <section className="bg-[#faf7f4] p-8 rounded-2xl border space-y-6">
-              <h3 className="text-xl font-bold text-[#5C3A21]">👤 Visitor Details</h3>
+              <h3 className="text-xl font-bold text-[#5C3A21]">👤 {t("visitorDetails")}</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <input
-                  name="name"
-                  placeholder="Visitor Name *"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="input-modern"
-                />
+                    name="name"
+                    placeholder={t("visitorName")}
+                    value={formData.name}
+                    onFocus={() => {
+                      setActiveInput("name");
+                      if (isHindi) setShowKeyboard(true);
+                    }}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        name: e.target.value.replace(/[^A-Za-z\u0900-\u097F ]/g, "")
+                      })
+                    }
+                    className="input-modern"
+                  />
                 <input
-                  name="phoneNo"
-                  placeholder="Phone Number *"
-                  value={formData.phoneNo}
-                  onChange={handleChange}
-                  className="input-modern"
-                />
+                    name="phoneNo"
+                    placeholder={t("phoneNumber")}
+                    value={formData.phoneNo}
+                    maxLength={10}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        phoneNo: e.target.value.replace(/\D/g, "")
+                      })
+                    }
+                    className="input-modern"
+                  />
               </div>
             </section>
 
             {/* VEHICLE */}
             <section className="bg-[#faf7f4] p-8 rounded-2xl border space-y-4">
-              <h3 className="text-xl font-bold text-[#5C3A21]">🚗 Vehicle (Optional)</h3>
+              <h3 className="text-xl font-bold text-[#5C3A21]">🚗 {t("vehicleOptional")}</h3>
 
+             <div>
               <input
                 name="vehicleNo"
-                placeholder="Vehicle Number (leave empty for walking visitors)"
+                placeholder={t("vehicleNumber")}
                 value={formData.vehicleNo}
-                onChange={handleChange}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    vehicleNo: e.target.value.toUpperCase()
+                  })
+                }
                 className="input-modern"
               />
+
+              <p className="text-sm text-gray-500 mt-1">
+                {t("leaveEmptyWalkingVisitor")}
+              </p>
+</div>
             </section>
 
             {/* ID VERIFICATION */}
             <section className="bg-[#faf7f4] p-8 rounded-2xl border space-y-6">
-              <h3 className="text-xl font-bold text-[#5C3A21]">🪪 Identity Verification</h3>
+              <h3 className="text-xl font-bold text-[#5C3A21]">🪪 {t("identityVerification")}</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <select
@@ -191,15 +295,15 @@ await axios.post(
                   onChange={handleChange}
                   className="input-modern"
                 >
-                  <option value="">Select ID Proof *</option>
-                  <option value="Aadhaar">Aadhaar</option>
-                  <option value="PAN">PAN</option>
-                  <option value="DL">Driving License</option>
+                  <option value="">{t("selectIdProof")}</option>
+                  <option value="Aadhaar">{t("aadhaar")}</option>
+                  <option value="PAN">{t("pan")}</option>
+                  <option value="DL">{t("drivingLicense")}</option>
                 </select>
 
                 <input
                   name="idProofNumber"
-                  placeholder="ID Number *"
+                  placeholder={t("idNumber")}
                   value={formData.idProofNumber}
                   onChange={handleChange}
                   className="input-modern"
@@ -209,7 +313,7 @@ await axios.post(
 
             {/* VISIT REASON */}
             <section className="bg-[#faf7f4] p-8 rounded-2xl border space-y-6">
-              <h3 className="text-xl font-bold text-[#5C3A21]">📋 Visit Information</h3>
+              <h3 className="text-xl font-bold text-[#5C3A21]">📋 {t("visitInformation")}</h3>
 
               <select
                 name="reasonOfVisit"
@@ -217,24 +321,28 @@ await axios.post(
                 onChange={handleChange}
                 className="input-modern"
               >
-                <option value="">Select Reason *</option>
-                <option value="Delivery">Delivery</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Official Work">Official Work</option>
-                <option value="Parent / Guardian">Parent / Guardian</option>
-                <option value="Alumni">Alumni</option>
-                <option value="Other">Other</option>
+                <option value="">{t("selectReason")}</option>
+                <option value="Delivery">{t("delivery")}</option>
+                <option value="Maintenance">{t("maintenance")}</option>
+                <option value="Official Work">{t("officialWork")}</option>
+                <option value="Parent / Guardian">{t("parentGuardian")}</option>
+                <option value="Alumni">{t("alumni")}</option>
+                <option value="Other">{t("other")}</option>
               </select>
 
               {(formData.reasonOfVisit === "Other" ||
                 formData.reasonOfVisit === "Alumni") && (
                 <input
-                  name="otherReason"
-                  placeholder="Please specify reason *"
-                  value={formData.otherReason}
-                  onChange={handleChange}
-                  className="input-modern"
-                />
+                    name="otherReason"
+                    placeholder={t("specifyReason")}
+                    value={formData.otherReason}
+                    onFocus={() => {
+                      setActiveInput("otherReason");
+                      if (isHindi) setShowKeyboard(true);
+                    }}
+                    onChange={handleChange}
+                    className="input-modern"
+                  />
               )}
             </section>
 
@@ -252,12 +360,31 @@ await axios.post(
                 transition-all
               "
             >
-              Save Manual Entry
+              {t("saveManualEntry")}
             </button>
           </form>
         </main>
-      </div>
+        {showKeyboard && isHindi && (
+  <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl p-4 z-50">
+    <Keyboard
+      layout={hindiLayout}
+      display={display}
+      onChange={onKeyboardChange}
+    />
 
+    <div className="flex justify-end mt-2">
+      <button
+        type="button"
+        onClick={() => setShowKeyboard(false)}
+        className="px-4 py-2 bg-[#8B5E3C] text-white rounded-lg"
+      >
+        कीबोर्ड बंद करें
+      </button>
+    </div>
+  </div>
+)}
+      </div>
+              
       <Footer />
     </div>
   );

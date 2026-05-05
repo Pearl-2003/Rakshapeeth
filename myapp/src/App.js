@@ -12,8 +12,19 @@ import Setting from "./pages/Setting";
 import FeedbackPage from "./pages/feedback.js"; // Corrected
 import LoginPage from "./pages/login";
 import SettingPage from "./pages/settings";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import ContactUsPage from "./pages/ContactUs"; // Added
+import ContactUsPageAdmin from "./pages/ContactUsAdmin"; // Added
+import ContactUsPageGuard from "./pages/ContactUsGuard"; // Added
+import ContactUsPageParent from "./pages/ContactUsParent"; // Added
+
 import CustomerCarePage from "./pages/CustomerCare";
+import CustomerCareAdmin from "./pages/CustomerCareAdmin";
+import CustomerCareGuard from "./pages/CustomerCareGuard";
+import CustomerCareParent from "./pages/CustomerCareParent";
+
 import PreVisit from "./pages/PreVisit";
 import AdminPage from "./pages/Admin/Dashboard";
 import GuardDashboard from "./pages/Guard/Dashboard";
@@ -71,46 +82,323 @@ function App() {
         <Route path="/settings" element={<SettingPage />} />
         <Route path="/contact-us" element={<ContactUsPage />} /> {/* Added */}
         <Route path="/customer-care" element={<CustomerCarePage />} />
+
+        <Route path="/customer-care-admin" 
+        element={
+          <ProtectedRoute role="admin">
+            <CustomerCareAdmin />
+          </ProtectedRoute>
+        } /> {/* Added */}
+        <Route path="/customer-care-guard" 
+        element={
+        <ProtectedRoute role="guard">
+            <CustomerCareGuard />
+          </ProtectedRoute>
+        } /> {/* Added */}
+        <Route path="/customer-care-parent" element={
+          <ProtectedRoute role="parent">
+            <CustomerCareParent />
+          </ProtectedRoute>
+        } /> {/* Added */}
+
+        <Route path="/ContactUs-admin" 
+        element={
+        <ProtectedRoute role="admin">
+              <ContactUsPageAdmin />
+            </ProtectedRoute>
+        } /> 
+        <Route path="/ContactUs-guard" element={
+          <ProtectedRoute role="guard">
+            <ContactUsPageGuard />
+          </ProtectedRoute>
+        } /> {/* Added */}
+        <Route path="/ContactUs-parent" element={
+          <ProtectedRoute role="parent">
+            <ContactUsPageParent />
+          </ProtectedRoute>
+        } /> {/* Added */}
+
         <Route path="/pre-visit" element={<PreVisit />} />
-        <Route path="/admin/dashboard" element={<AdminPage />} />
-        <Route path="/guard/dashboard" element={<GuardDashboard />} />
-        <Route path="/parent/dashboard" element={<ParentDashboard />} />
-        <Route path="/guard/verify-iris" element={<VerifyIris />} />
-        <Route path="/admin/requests" element={<ApproveRequest />} />
-        <Route path="/admin/whitelist" element={<Whitelist />} />
-        <Route path="/admin/occasional-visitors" element={<OccasionalVisitor />} />
-        <Route path="/admin/blacklist" element={<Blacklist />} />
-        <Route path="/admin/guards" element={<GuardsPage />} />
-        <Route path="/admin/students" element={<StudentsPage />} />
-        <Route path="/admin/monitor-guard" element={<MonitorGuard />} />
-        <Route path="/admin/add-student" element={<AddStudent />} />
-        <Route path="/admin/create-gatepass" element={<AdminCreateGatepass />} />
-        <Route path="/admin/system-activity" element={<SystemActivity />} />
-          <Route path="/admin/view-student-log" element={<ViewStudentLog />} />
-        <Route path="/guard/manual-entry" element={<ManualEntryForm />} />
-        <Route path="/admin/settings" element={<AdminSetting />} />
-        <Route path="/admin/verify-password" element={<VerifyPassword />} />
-        <Route path="/admin/edit-profile" element={<EditAdminProfile />} />
-        <Route path="/guard/settings" element={<GuardSettings />} />
-        <Route path="/guard/verify-password" element={<VerifyGuardPassword />} />
-        <Route path="/guard/edit-profile" element={<EditGuardProfile />} />
-        <Route path="/parent/settings" element={<ParentSettings />} />
-        <Route path="/parent/verify-password" element={<VerifyParentPassword />} />
-        <Route path="/parent/edit-profile" element={<EditParentProfile />} />
-        <Route path="/guard/visitors" element={<GuardVisitor />} />
-        <Route path="/admin/active-gatepasses" element={<ActiveGatePasses />} />
-        <Route path="/guard/register-student" element={<RegisterStudent />} />
-        <Route path="/guard/face-consent" element={<FaceConsent />} />
-        <Route path="/guard/face-enrollment" element={<FaceEnrollment />} />
-        <Route path="/guard/face-training" element={<FaceTraining />} />
-        <Route path="/guard/face-verify" element={<FaceVerify />} />
-          <Route path="/guard/vehicle-verification" element={<VehicleVerification />} />
-        <Route path="/guard/vehicle-number-plate" element={<VehicleNumberPlate />} />
-        <Route path="/guard/verify-two-wheeler-plate" element={<VerifyTwoWheelerPlate />} />
-        <Route path="/admin/vehicle-logs" element={<VehicleLogsPage />} />
-        <Route path="/admin/alerts" element={<Alerts />} />
-        <Route path="/parent/view-history" element={<ViewHistory />} />
-        <Route path="/guard-alert-modal" element={<GuardAlertModal />} />
+
+        {/* <Route path="/admin/dashboard" element={<AdminPage />} /> */}
+        {/* <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        /> */}
+
+        <Route path="/guard/dashboard" element={
+          <ProtectedRoute role="guard">
+            <GuardDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/parent/dashboard" element={
+          <ProtectedRoute role="parent">
+            <ParentDashboard />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/guard/verify-iris" element={
+          <ProtectedRoute role="guard">
+            <VerifyIris />
+          </ProtectedRoute>
+        } />
+
+        {/* <Route path="/admin/requests" element={<ApproveRequest />} /> */}
+        <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/requests"
+            element={
+              <ProtectedRoute role="admin">
+                <ApproveRequest />
+              </ProtectedRoute>
+            }
+          />
+        <Route 
+          path="/admin/whitelist" 
+          element={
+          <ProtectedRoute role="admin">
+                <Whitelist />
+              </ProtectedRoute>
+          }   
+        />
+        <Route 
+          path="/admin/occasional-visitors" 
+          element={
+          <ProtectedRoute role="admin">
+                <OccasionalVisitor />
+              </ProtectedRoute>
+          }   
+        />
+        <Route 
+          path="/admin/blacklist" 
+          element={
+          <ProtectedRoute role="admin">
+                <Blacklist />
+              </ProtectedRoute>
+          }   
+        />
+        <Route 
+          path="/admin/guards" 
+          element={
+          <ProtectedRoute role="admin">
+                <GuardsPage />
+              </ProtectedRoute>
+          }   
+        />
+        <Route 
+          path="/admin/students" 
+          element={
+          <ProtectedRoute role="admin">
+                <StudentsPage />
+              </ProtectedRoute>
+          }   
+        />
+        <Route 
+          path="/admin/monitor-guard" 
+          element={
+          <ProtectedRoute role="admin">
+                <MonitorGuard />
+              </ProtectedRoute>
+          }   
+        />
+        <Route 
+          path="/admin/add-student" 
+          element={
+          <ProtectedRoute role="admin">
+                <AddStudent />
+              </ProtectedRoute>
+          }   
+        />
+        <Route 
+          path="/admin/create-gatepass" 
+          element={
+          <ProtectedRoute role="admin">
+                <AdminCreateGatepass />
+              </ProtectedRoute>
+          }   
+        />
+        <Route 
+          path="/admin/system-activity" 
+          element={
+          <ProtectedRoute role="admin">
+                <SystemActivity />
+              </ProtectedRoute>
+          }   
+          />
+          <Route path="/admin/view-student-log" 
+          element={
+          <ProtectedRoute role="admin">
+                <ViewStudentLog />
+              </ProtectedRoute>
+          }   
+        />
+
+
+        <Route path="/guard/manual-entry" element={
+          <ProtectedRoute role="guard">
+            <ManualEntryForm />
+          </ProtectedRoute>
+        } />
+
+
+
+        <Route path="/admin/settings" 
+        element={
+        <ProtectedRoute role="admin">
+              <AdminSetting />
+            </ProtectedRoute>
+        } />
+        <Route path="/admin/verify-password" 
+        element={
+        <ProtectedRoute role="admin">
+              <VerifyPassword />
+            </ProtectedRoute>
+        } />
+        <Route path="/admin/edit-profile" 
+        element={
+        <ProtectedRoute role="admin">
+              <EditAdminProfile />
+            </ProtectedRoute>
+        } />
+
+
+        <Route path="/guard/settings" element={
+          <ProtectedRoute role="guard">
+            <GuardSettings />
+          </ProtectedRoute>
+        } />
+        <Route path="/guard/verify-password" element={
+          <ProtectedRoute role="guard">
+            <VerifyGuardPassword />
+          </ProtectedRoute>
+        } />
+        <Route path="/guard/edit-profile" element={
+          <ProtectedRoute role="guard">
+            <EditGuardProfile />
+          </ProtectedRoute>
+        } />
+
+
+        <Route path="/parent/settings" element={
+          <ProtectedRoute role="parent">
+            <ParentSettings />
+          </ProtectedRoute>
+        } />
+        <Route path="/parent/verify-password" element={
+          <ProtectedRoute role="parent">
+            <VerifyParentPassword />
+          </ProtectedRoute>
+        } />
+        <Route path="/parent/edit-profile" element={
+          <ProtectedRoute role="parent">
+            <EditParentProfile />
+          </ProtectedRoute>
+        } />
+
+
+        <Route path="/guard/visitors" element={
+          <ProtectedRoute role="guard">
+            <GuardVisitor />
+          </ProtectedRoute>
+        } />
+
+
+        <Route path="/admin/active-gatepasses" 
+        element={
+        <ProtectedRoute role="admin">
+              <ActiveGatePasses />
+            </ProtectedRoute>
+        } />
+
+
+
+        <Route path="/guard/register-student" element={
+          <ProtectedRoute role="guard">
+            <RegisterStudent />
+          </ProtectedRoute>
+        } />
+        <Route path="/guard/face-consent" element={
+          <ProtectedRoute role="guard">
+            <FaceConsent />
+          </ProtectedRoute>
+        } />
+        <Route path="/guard/face-enrollment" element={
+          <ProtectedRoute role="guard">
+            <FaceEnrollment />
+          </ProtectedRoute>
+        } />
+        <Route path="/guard/face-training" element={
+          <ProtectedRoute role="guard">
+            <FaceTraining />
+          </ProtectedRoute>
+        } />
+        <Route path="/guard/face-verify" element={
+          <ProtectedRoute role="guard">
+            <FaceVerify />
+          </ProtectedRoute>
+        } />
+          <Route path="/guard/vehicle-verification" element={
+            <ProtectedRoute role="guard">
+              <VehicleVerification />
+            </ProtectedRoute>
+          } />
+        <Route path="/guard/vehicle-number-plate" element={
+          <ProtectedRoute role="guard">
+            <VehicleNumberPlate />
+          </ProtectedRoute>
+        } />
+        <Route path="/guard/verify-two-wheeler-plate" element={
+          <ProtectedRoute role="guard">
+            <VerifyTwoWheelerPlate />
+          </ProtectedRoute>
+        } />
+
+
+        <Route path="/admin/vehicle-logs" 
+        element={
+        <ProtectedRoute role="admin">
+              <VehicleLogsPage />
+            </ProtectedRoute>
+        } />
+        <Route path="/admin/alerts" 
+        element={
+        <ProtectedRoute role="admin">
+              <Alerts />
+            </ProtectedRoute>
+        } />
+
+
+        <Route path="/parent/view-history" element={
+          <ProtectedRoute role="parent">
+            <ViewHistory />
+          </ProtectedRoute>
+        } />
+        <Route path="/guard-alert-modal" element={
+          <ProtectedRoute role="guard">
+            <GuardAlertModal />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   );

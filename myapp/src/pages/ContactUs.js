@@ -1,43 +1,70 @@
-import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useState, useEffect } from "react";
 import HeaderNavbar from "../components/HeaderNavbar";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import Swal from "sweetalert2";
+import Keyboard from "react-simple-keyboard";
+import "react-simple-keyboard/build/css/index.css";
+const hindiLayout = {
+  default: [
+    "१ २ ३ ४ ५ ६ ७ ८ ९ ० {bksp}",
+    "क ख ग घ ङ च छ ज झ ञ",
+    "ट ठ ड ढ ण त थ द ध न",
+    "प फ ब भ म य र ल व",
+    "श ष स ह",
+    "ा ि ी ु ू े ै ो ौ ं ः",
+    "{space} {del}"
+  ]
+};
 
-const CONTACT_INFO = [
+const display = {
+  "{bksp}": "⌫",
+  "{del}": "DEL",
+  "{space}": "SPACE"
+};
+
+export default function ContactUs() {
+  const [showKeyboard, setShowKeyboard] = useState(false);
+const [activeInput, setActiveInput] = useState(null);
+  const { t,i18n } = useTranslation();
+    // track currently focused input
+  const CONTACT_INFO = [
   {
     emoji: "📍",
-    title: "Visit Us",
-    short: "Banasthali Vidyapith, Rajasthan",
-    full: "Banasthali Vidyapith\nP.O. Banasthali Vidyapith\nRajasthan – 304022, India",
+    title: t("visitUs"),
+    short: t("visitShort"),
+    full: t("visitFull"),
   },
   {
     emoji: "📧",
-    title: "Email Us",
-    short: "support@rakshapeeth.com",
-    full: "General: info@rakshapeeth.com\nSupport: support@rakshapeeth.com\nSecurity: security@rakshapeeth.com",
+    title: t("emailUs"),
+    short: t("emailShort"),
+    full: t("emailFull"),
   },
   {
     emoji: "📞",
-    title: "Call Us",
-    short: "+91 98765 43210",
-    full: "Main Office: +91 12345 67890\nSecurity Desk: +91 98765 43210\nEmergency: +91 11111 22222",
+    title: t("callUs"),
+    short: t("callShort"),
+    full: t("callFull"),
   },
   {
     emoji: "🕐",
-    title: "Office Hours",
-    short: "9 AM – 6 PM",
-    full: "Wed – Mon: 9:00 AM – 6:00 PM\nTuesday: Closed\n(Security Desk works 24/7)",
+    title: t("officeHours"),
+    short: t("officeShort"),
+    full: t("officeFull"),
   },
+   
 ];
-
-export default function ContactUs() {
+const onKeyboardChange = (input) => {
+  if (!activeInput) return;
+  setFormData((prev) => ({ ...prev, [activeInput]: input }));
+};
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
   const [activeInfo, setActiveInfo] = useState(null);
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -66,8 +93,8 @@ export default function ContactUs() {
       if (data.success) {
         Swal.fire({
           icon: "success",
-          title: "Message Sent ✨",
-          text: "Thanks for reaching out! We’ll contact you soon.",
+          title: t("msgSent"),
+          text: t("msgSentDesc"),
           confirmButtonColor: "#8B5E3C",
         });
 
@@ -81,16 +108,16 @@ export default function ContactUs() {
       } else {
         Swal.fire({
           icon: "error",
-          title: "Oops!",
-          text: data.message || "Something went wrong",
+          title: t("oops"),
+          text: data.message || t("somethingWrong"),
           confirmButtonColor: "#8B5E3C",
         });
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
-        title: "Server Error ❌",
-        text: "Please try again later",
+        title: t("serverError"),
+text: t("tryLater"),
         confirmButtonColor: "#8B5E3C",
       });
     }
@@ -151,19 +178,19 @@ export default function ContactUs() {
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-5xl font-extrabold text-center mb-4 bg-clip-text text-transparent bg-gradient-to-r from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E]"
+          className="text-5xl font-extrabold text-center mb-4 pt-2 leading-loose bg-clip-text text-transparent bg-gradient-to-r from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E]"
         >
-          Let’s Talk 💬
+          {t("contactTitle")} 💬
         </motion.h2>
 
         <p className="text-center text-brown/70 max-w-2xl mx-auto mb-10 text-lg">
-          Questions, feedback, or help? Switch tabs or tap cards to explore ✨
+          {t("contactDesc")}
         </p>
 
         <div className="flex justify-center mb-14">
           {[
-            { key: "info", label: "📞 Contact Info" },
-            { key: "form", label: "✉️ Contact Form" },
+            { key: "info", label: `📞 ${t("contactInfo")}` },
+{ key: "form", label: `✉️ ${t("contactForm")}` },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -202,7 +229,7 @@ export default function ContactUs() {
                   </h3>
                   <p className="text-brown/70">{item.short}</p>
                   <p className="mt-4 text-sm text-brown/50 italic">
-                    Tap to expand ↗
+                    {t("tapExpand")}
                   </p>
                 </motion.div>
               ))}
@@ -219,29 +246,49 @@ export default function ContactUs() {
               className="max-w-3xl mx-auto bg-white/70 backdrop-blur-xl p-12 rounded-3xl shadow-2xl space-y-6"
             >
               {[
-                { name: "name", placeholder: "👤 Your Name", required: true },
-                { name: "email", placeholder: "📧 Email Address", required: true },
-                { name: "phone", placeholder: "📞 Phone Number", required: false },
-                { name: "subject", placeholder: "📝 Subject", required: true },
-              ].map((field) => (
-                <input
-                  key={field.name}
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleChange}
-                  placeholder={field.placeholder}
-                  required={field.required}
-                  className="w-full px-5 py-4 rounded-xl border border-brown/40 focus:outline-none focus:ring-2 focus:ring-brown shadow-sm"
-                />
-              ))}
+              { name: "name", placeholder: `👤 ${t("yourName")}`, required: true },
+              { name: "email", placeholder: `📧 ${t("emailAddress")}`, required: true },
+              { name: "phone", placeholder: `📞 ${t("phoneNumber")}`, required: false },
+              { name: "subject", placeholder: `📝 ${t("subject")}`, required: true },
+            ].map((field) => (
+              <input
+                key={field.name}
+                name={field.name}
+                value={formData[field.name]}
+                placeholder={field.placeholder}
+                required={field.required}
+                onFocus={() => {
+                  setActiveInput(field.name); // active input for keyboard
+                  if (i18n.language === "hi") setShowKeyboard(true); // show Hindi keyboard if active
+                }}
+                onChange={(e) => {
+                  // Allow Hindi + English letters only
+                  const value = e.target.value.replace(/[^A-Za-z\u0900-\u097F ]/g, "");
+                  setFormData({ ...formData, [field.name]: value });
+                }}
+                onInvalid={(e) => e.target.setCustomValidity(t("fillField"))}
+                onInput={(e) => e.target.setCustomValidity("")}
+                className="w-full px-5 py-4 rounded-xl border border-brown/40 focus:outline-none focus:ring-2 focus:ring-brown shadow-sm"
+              />
+            ))}
 
               <textarea
                 name="message"
                 value={formData.message}
-                onChange={handleChange}
-                rows={5}
-                placeholder="💬 Your Message"
+                placeholder={`💬 ${t("yourMessage")}`}
                 required
+                rows={5}
+                onFocus={() => {
+                  setActiveInput("message"); // active input for keyboard
+                  if (i18n.language === "hi") setShowKeyboard(true); // show Hindi keyboard if active
+                }}
+                onChange={(e) => {
+                  // Allow Hindi + English letters only
+                  const value = e.target.value.replace(/[^A-Za-z\u0900-\u097F\s]/g, "");
+                  setFormData({ ...formData, message: value });
+                }}
+                onInvalid={(e) => e.target.setCustomValidity(t("fillField"))}
+                onInput={(e) => e.target.setCustomValidity("")}
                 className="w-full px-5 py-4 rounded-xl border border-brown/40 focus:outline-none focus:ring-2 focus:ring-brown shadow-sm"
               />
 
@@ -249,11 +296,30 @@ export default function ContactUs() {
                 type="submit"
                 className="w-full py-4 rounded-full bg-gradient-to-r from-[#B8860B] via-[#8B5A2B] to-[#3E2723] text-white font-bold text-lg tracking-wide hover:scale-105 transition-all shadow-xl"
               >
-                Send Message 🚀
+                {t("sendMessage")} 🚀
               </button>
             </motion.form>
+            
           )}
         </AnimatePresence>
+        {showKeyboard && (
+  <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl p-4 z-50">
+    <Keyboard
+      layout={hindiLayout}
+      display={display}
+      onChange={onKeyboardChange}
+    />
+    <div className="flex justify-end mt-2">
+      <button
+        type="button"
+        onClick={() => setShowKeyboard(false)}
+        className="px-4 py-2 bg-[#8B5E3C] text-white rounded-lg"
+      >
+        कीबोर्ड बंद करें
+      </button>
+    </div>
+  </div>
+)}
       </main>
 
       <Footer />

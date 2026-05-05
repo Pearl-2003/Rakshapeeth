@@ -1,5 +1,13 @@
-
 const mongoose = require('mongoose');
+
+const companionSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  phone: {
+    type: String,
+    required: true,
+    match: [/^\d{10}$/, "Companion phone must be 10 digits"]
+  }
+}, { _id: false });
 
 const occasionalVisitorSchema = new mongoose.Schema({
   visitorName: {
@@ -13,12 +21,31 @@ const occasionalVisitorSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  companions: {
+        type: [companionSchema],
+        default: []
+      },
+ 
+    vehicleType: {
+      type: String,
+      enum: ["Private", "Public", "None"],
+      default: "None"
+    },
+    driverName: {
+  type: String,
+  trim: true
+},
 
-  vehicleNo: {
-    type: String,
-    trim: true,
-    uppercase: true
-  },
+driverPhone: {
+  type: String,
+  match: [/^\d{10}$/, "Driver phone must be 10 digits"]
+},
+
+driverVehicleNumber: {
+  type: String,
+  trim: true,
+  uppercase: true
+},
 
   visitorType: {
     type: String,
@@ -33,10 +60,11 @@ const occasionalVisitorSchema = new mongoose.Schema({
   },
 
   phoneNumber: {
-    type: String,
-    required: true,
-    match: [/^\+?[1-9]\d{9,14}$/, "Invalid phone number"]
-  },
+  type: String,
+  required: true,
+  match: [/^\d{10}$/, "Phone number must be exactly 10 digits"]
+},
+
 
   dateOfVisit: {
     type: Date,
@@ -52,6 +80,23 @@ occasionalVisitorSchema.index({ visitorType: 1 });
 occasionalVisitorSchema.index({ dateOfVisit: 1 });
 occasionalVisitorSchema.index({ noOfCompanions: 1 });
 occasionalVisitorSchema.index({ reason: "text" });
+occasionalVisitorSchema.pre("validate", function (next) {
+  if (this.vehicleType === "Public") {
+    if (!this.driverName) {
+      return next(new Error("Driver name is required for public transport"));
+    }
+
+    if (!this.driverPhone || !/^\d{10}$/.test(this.driverPhone)) {
+      return next(new Error("Valid 10-digit driver phone is required"));
+    }
+
+    if (!this.driverVehicleNumber) {
+      return next(new Error("Driver vehicle number is required"));
+    }
+  }
+
+  next();
+});
 
 const OccasionalVisitor = mongoose.model(
   'OccasionalVisitor',

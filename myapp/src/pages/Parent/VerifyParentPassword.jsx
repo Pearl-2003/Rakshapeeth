@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import { useTranslation } from "react-i18next";
 export default function VerifyParentPassword({ onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const token = localStorage.getItem("parentToken");
@@ -20,10 +21,10 @@ export default function VerifyParentPassword({ onClose, onSuccess }) {
       );
 
       if (res.data.valid) onSuccess();
-      else setError("Verification failed");
+      else setError(t("verificationFailed"));
     } catch (err) {
       console.error(err);
-      setError("Verification failed");
+      setError(t("verificationFailed"));
     }
   };
 
@@ -31,12 +32,12 @@ export default function VerifyParentPassword({ onClose, onSuccess }) {
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-xl">
         <h3 className="text-xl font-semibold mb-4 text-center">
-          Verify Password
+          <h3>{t("verifyPassword")}</h3>
         </h3>
 
         <input
           type="password"
-          placeholder="Enter current password"
+          placeholder={t("enterCurrentPassword")}
           className="w-full px-4 py-3 border rounded-xl mb-4"
           value={password}
           onChange={e => setPassword(e.target.value)}
@@ -53,13 +54,13 @@ export default function VerifyParentPassword({ onClose, onSuccess }) {
             onClick={onClose}
             className="flex-1 py-3 border rounded-full"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             onClick={verify}
             className="flex-1 py-3 rounded-full bg-[#7B4B2A] text-white font-semibold"
           >
-            Verify
+            {t("verify")}
           </button>
         </div>
       </div>

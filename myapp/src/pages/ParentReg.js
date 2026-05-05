@@ -7,29 +7,46 @@ import HeaderNavbar from "../components/HeaderNavbar";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
 import Logo from "../assets/logo.png";
-
+import { useTranslation } from "react-i18next";
+import Keyboard from "react-simple-keyboard";
+import "react-simple-keyboard/build/css/index.css";
 const MySwal = withReactContent(Swal);
 
-const countryOptions = [
-  { code: "+91", name: "India" },
-  { code: "+1", name: "United States" },
-  { code: "+44", name: "United Kingdom" },
-  { code: "+61", name: "Australia" },
-];
+const hindiLayout = {
+  default: [
+    "१ २ ३ ४ ५ ६ ७ ८ ९ ० {bksp}",
+    "क ख ग घ ङ च छ ज झ ञ",
+    "ट ठ ड ढ ण त थ द ध न",
+    "प फ ब भ म य र ल व",
+    "श ष स ह",
+    "ा ि ी ु ू े ै ो ौ ं ः",
+    "{space} {del}"
+  ]
+};
+
+const display = {
+  "{bksp}": "⌫",
+  "{del}": "DEL",
+  "{space}": "SPACE"
+};
 
 function validateEmail(email) {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  
   return re.test(email);
 }
 
-function validatePhone(countryCode, phone) {
+function validatePhone(phone) {
+  if (!phone) return false;
+
   const digits = phone.replace(/\D/g, "");
-  return digits.length >= 6 && digits.length <= 15 && /^\d+$/.test(digits);
+  return /^[6-9]\d{9}$/.test(digits);
 }
+
 function validateName(name) {
   if (!name) return false;
   const trimmed = name.trim();
-  const re = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+  const re = /^[A-Za-z\u0900-\u097F]+(?: [A-Za-z\u0900-\u097F]+)*$/;
   return re.test(trimmed);
 }
 function passwordRules(password) {
@@ -57,6 +74,7 @@ const Icon = ({ ok }) =>
     </span>
   );
 export default function ParentRegister() {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -77,10 +95,22 @@ export default function ParentRegister() {
     lastName: "",
     email: "",
     password: "",
-    countryCode: "+91",
     phone: "",
   });
+  
+  const onKeyboardChange = (input) => {
+  if (!activeInput) return;
 
+  setFormData((prev) => ({
+    ...prev,
+    [activeInput]: input
+  }));
+};
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [activeInput, setActiveInput] = useState(null);
+
+  const { i18n } = useTranslation();
+  const isHindi = i18n.language === "hi";
   const [touched, setTouched] = useState({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -131,7 +161,7 @@ export default function ParentRegister() {
     setSubmitAttempted(true);
 
     if (!formValid) {
-      showError("Fix required fields", "Please fill all required fields correctly before submitting.");
+      showError(t("fixFields"), t("fillCorrect"));
       return;
     }
 
@@ -141,7 +171,7 @@ export default function ParentRegister() {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
       email: formData.email.trim().toLowerCase(),
-      phone: `${formData.countryCode}-${formData.phone.replace(/\D/g, "")}`,
+      phone: formData.phone.replace(/\D/g, ""),
       password: formData.password,
     };
 
@@ -156,18 +186,18 @@ export default function ParentRegister() {
 
       if (!res.ok) {
         const message = data.msg || data.error || "Registration failed";
-        showError("Registration failed", message);
+       showError(t("registrationFailed"), message);
         setLoading(false);
         return;
       }
 
-      showSuccess("Registered", "Parent registered successfully 🎉");
+
+      showSuccess(t("registered"), t("parentRegisteredSuccess"));
       setFormData({
         firstName: "",
         lastName: "",
         email: "",
         password: "",
-        countryCode: "+91",
         phone: "",
       });
       setTouched({});
@@ -175,7 +205,7 @@ export default function ParentRegister() {
       setLoading(false);
     } catch (error) {
       console.error("Parent registration network error:", error);
-      showError("Network Error", "Unable to reach the server. Please try again later.");
+     showError(t("networkError"), t("tryLater"));
       setLoading(false);
     }
   };
@@ -203,8 +233,8 @@ export default function ParentRegister() {
 
       {/* Main Content */}
       <main className="flex-grow w-full max-w-5xl mx-auto px-6 py-16 text-brown">
-        <h2 className="text-4xl md:text-5xl mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E] font-extrabold tracking-wide leading-relaxed pb-2">
-          Parent Registration
+        <h2 className="text-4xl md:text-5xl mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E] font-extrabold tracking-wide leading-relaxed pt-2 pb-2">
+          {t("parentRegistration")}
         </h2>
 
         <form
@@ -215,20 +245,30 @@ export default function ParentRegister() {
           {/* Input Fields same as before */}
           <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>First Name <span className="text-red-600">*</span></span>
+              <span>{t("firstName")} <span className="text-red-600">*</span></span>
               <Icon ok={firstNameValid} />
             </div>
             <input
               type="text"
               name="firstName"
               value={formData.firstName}
-              onChange={handleChange}
+              onChange={(e) => {
+              const value = e.target.value.replace(/[^A-Za-z\u0900-\u097F ]/g, "");
+              setFormData((prev) => ({
+                ...prev,
+                firstName: value
+              }));
+            }}
+            onFocus={() => {
+              setActiveInput("firstName");
+              if (isHindi) setShowKeyboard(true);
+            }}
               onBlur={handleBlur}
               required
               className={`w-full px-4 py-3 rounded-xl border ${ (touched.firstName || submitAttempted) && formData.firstName.trim().length === 0 ? "border-red-500" : "border-brown/50" } focus:outline-none focus:ring-2 focus:ring-brown/70`}
             />
             {(touched.firstName || submitAttempted) && formData.firstName.trim().length === 0 && (
-              <p className="text-red-600 text-sm mt-1">First name is required.</p>
+              <p className="text-red-600 text-sm mt-1">{t("firstNameRequired")}</p>
             )}
           </label>
 
@@ -236,20 +276,30 @@ export default function ParentRegister() {
             {/* Last Name */}
           <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>Last Name <span className="text-red-600">*</span></span>
+              <span><span>{t("lastName")} <span className="text-red-600">*</span></span><span className="text-red-600">*</span></span>
               <Icon ok={lastNameValid} />
             </div>
             <input
               type="text"
               name="lastName"
               value={formData.lastName}
-              onChange={handleChange}
+              onChange={(e) => {
+              const value = e.target.value.replace(/[^A-Za-z\u0900-\u097F ]/g, "");
+              setFormData((prev) => ({
+                ...prev,
+                lastName: value
+              }));
+            }}
+            onFocus={() => {
+              setActiveInput("lastName");
+              if (isHindi) setShowKeyboard(true);
+            }}
               onBlur={handleBlur}
               required
               className={`w-full px-4 py-3 rounded-xl border ${ (touched.lastName || submitAttempted) && formData.lastName.trim().length === 0 ? "border-red-500" : "border-brown/50" } focus:outline-none focus:ring-2 focus:ring-brown/70`}
             />
             {(touched.lastName || submitAttempted) && formData.lastName.trim().length === 0 && (
-              <p className="text-red-600 text-sm mt-1">Last name is required.</p>
+              <p className="text-red-600 text-sm mt-1">{t("lastNameRequired")}</p>
             )}
           </label>
           </div>
@@ -257,7 +307,7 @@ export default function ParentRegister() {
           <div>
             <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>Email Address <span className="text-red-600 text-xs">*</span></span>
+              <span>{t("emailAddress")} <span className="text-red-600 text-xs">*</span></span>
               <Icon ok={formData.email.length === 0 ? false : emailValid} />
             </div>
             <input
@@ -269,7 +319,7 @@ export default function ParentRegister() {
               className={`w-full px-4 py-3 rounded-xl border ${ (touched.email || submitAttempted) && formData.email && !emailValid ? "border-red-500" : "border-brown/50" } focus:outline-none focus:ring-2 focus:ring-brown/70`}
             />
             {(submitAttempted && formData.email && !emailValid) && (
-              <p className="text-red-600 text-sm mt-1">Please enter a valid email address.</p>
+              <p className="text-red-600 text-sm mt-1">{t("validEmail")}</p>
             )}
           </label>
           </div>
@@ -277,7 +327,7 @@ export default function ParentRegister() {
           <div>
             <label className="relative">
             <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
-              <span>Password <span className="text-red-600">*</span></span>
+              <span>{t("password")} <span className="text-red-600">*</span></span>
               <Icon ok={formData.password.length > 0 && passwordValid} />
             </div>
             <input
@@ -291,49 +341,51 @@ export default function ParentRegister() {
               autoComplete="new-password"
             />
             <div className="mt-2 text-sm">
-              <div>Password strength: <strong>{["Very weak","Weak","Okay","Good","Strong"][pw.score]}</strong></div>
+              <div>{t("passwordStrength")}<strong>{["Very weak","Weak","Okay","Good","Strong"][pw.score]}</strong></div>
               <ul className="ml-4 list-disc text-brown/70">
-                <li className={pw.rules.length ? "text-green-700" : "text-red-600"}>Minimum 8 characters</li>
-                <li className={pw.rules.uppercase ? "text-green-700" : "text-red-600"}>At least one uppercase</li>
-                <li className={pw.rules.number ? "text-green-700" : "text-red-600"}>At least one number</li>
-                <li className={pw.rules.special ? "text-green-700" : "text-red-600"}>At least one special char</li>
+                <li  className={pw.rules.length ? "text-green-600" : "text-red-500"}>{t("min8")}</li>
+                <li  className={pw.rules.length ? "text-green-600" : "text-red-500"}>{t("oneUpper")}</li>
+                <li  className={pw.rules.length ? "text-green-600" : "text-red-500"}>{t("oneNumber")}</li>
+                <li  className={pw.rules.length ? "text-green-600" : "text-red-500"}>{t("oneSpecial")}</li>
               </ul>
             </div>
           </label>
           </div>
 
-          <div>
-            <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              Phone Number<span className="text-red-600">*</span>
-            </label>
-            <div className="flex gap-3">
-              <select
-                name="countryCode"
-                value={formData.countryCode}
-                onChange={handleChange}
-                className="px-3 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70"
-              >
-                {countryOptions.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name} ({c.code})
-                  </option>
-                ))}
-              </select>
-
-              <input
+          {/* Phone */}
+          <label className="relative">
+            <div className="flex items-center justify-between mb-2 font-semibold text-sm uppercase text-brown/80">
+              <span>{t("phoneNumber")} <span className="text-red-600">*</span></span>
+              <Icon ok={formData.phone.length > 0 && phoneValid} />
+            </div>
+            <input
+                type="tel"
                 name="phone"
                 value={formData.phone}
-                onChange={handleChange}
+                onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                setFormData((prev) => ({
+                  ...prev,
+                  phone: value
+                }));
+              }}
+              maxLength={10}
+                
                 onBlur={handleBlur}
-                placeholder="Enter phone number"
+                placeholder={t("enterPhone")}
                 required
-                className="flex-1 px-4 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70"
+                className={`w-full px-4 py-3 rounded-xl border ${
+                  (touched.phone || submitAttempted) && !phoneValid
+                    ? "border-red-500"
+                    : "border-brown/50"
+                } focus:outline-none focus:ring-2 focus:ring-brown/70`}
+                
               />
-            </div>
-            {(touched.phone || submitAttempted) && !phoneValid && (
-              <p className="text-red-600 text-sm mt-1">Enter a valid phone number.</p>
+                          
+            {(submitAttempted && !phoneValid) && (
+              <p className="text-red-600 text-sm mt-1">{t("validPhone")}</p>
             )}
-          </div>
+          </label>
 
           <button
             type="submit"
@@ -344,11 +396,29 @@ export default function ParentRegister() {
                 : "bg-gradient-to-br from-[#B8860B] via-[#8B5A2B] to-[#3E2723] hover:scale-105"
             } text-cream font-bold rounded-full shadow-inner transition-all duration-500 tracking-wider`}
           >
-            {loading ? "Registering..." : "Register"}
+            {loading ? t("registering") : t("register")}
           </button>
         </form>
       </main>
+            {showKeyboard && isHindi && (
+            <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl p-4 z-50">
+              <Keyboard
+                layout={hindiLayout}
+                display={display}
+                onChange={onKeyboardChange}
+              />
 
+              <div className="flex justify-end mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowKeyboard(false)}
+                  className="px-4 py-2 bg-brown text-white rounded-lg"
+                >
+                  कीबोर्ड बंद करें
+                </button>
+              </div>
+            </div>
+          )}
       <Footer />
     </div>
   );

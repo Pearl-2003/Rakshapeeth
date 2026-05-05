@@ -36,4 +36,5 @@ studentLogSchema.index(
   { unique: true, partialFilterExpression: { status: "inside" } }
 );
 
-module.exports = mongoose.model("StudentLog", studentLogSchema);
+module.exports = mongoose.models.StudentLog || mongoose.model("StudentLog", studentLogSchema);
+

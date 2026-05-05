@@ -1,12 +1,12 @@
 // src/components/Sidebar.js
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-
+import { useTranslation } from "react-i18next";
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const [registerOpen, setRegisterOpen] = useState(false);
   const registerRef = useRef(null);
+  const { i18n, t } = useTranslation();
 
-  // Close dropdown if clicked outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (registerRef.current && !registerRef.current.contains(event.target)) {
@@ -26,7 +26,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-extrabold tracking-wide text-cream drop-shadow-lg">
-          Menu
+          {t("menu")}
         </h2>
         <button
           onClick={() => setSidebarOpen(false)}
@@ -43,7 +43,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
             onClick={() => setRegisterOpen(!registerOpen)}
             className="flex items-center justify-between w-full px-3 py-3 rounded-xl hover:bg-cream/20 hover:text-brown transition-all duration-300 shadow-inner hover:shadow-lg hover:scale-105"
           >
-            <span className="font-semibold text-lg">📝 Register</span>
+            <span className="font-semibold text-lg">📝 {t("register")}</span>
             <span
               className={`ml-2 transform transition-transform duration-300 ${
                 registerOpen ? "rotate-180" : "rotate-0"
@@ -58,28 +58,22 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
               registerOpen ? "max-h-40 mt-1" : "max-h-0"
             }`}
           >
-            <Link
-              to="/guard-registration"
-              className="flex items-center px-6 py-2 rounded-xl hover:bg-cream/20 hover:text-brown transition-all duration-300"
-            >
-              <span>🛡️</span>
-              <span className="ml-2">Guard</span>
-            </Link>
+            
             <Link
               to="/parent-registration"
               className="flex items-center px-6 py-2 rounded-xl hover:bg-cream/20 hover:text-brown transition-all duration-300"
             >
               <span>👨‍👩‍👧</span>
-              <span className="ml-2">Parent</span>
+              <span className="ml-2">{t("parent")}</span>
             </Link>
           </div>
         </div>
 
         {/* Sidebar Links */}
         {[
-          { name: "Login", icon: "🔐", path: "/login" },
-          { name: "Pre-Visit Form", icon: "📝", path: "/pre-visit" },
-          { name: "Feedback", icon: "💬", path: "/feedback" }
+          { name: t("login"), icon: "🔐", path: "/login" },
+          { name: t("preVisit"), icon: "📝", path: "/pre-visit" },
+          { name: t("feedback"), icon: "💬", path: "/feedback" }
         ].map((item) => (
           <Link
             key={item.name}

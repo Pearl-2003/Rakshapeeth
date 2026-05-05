@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom"; // ✅ ADD THIS
-import Sidebar from "../../components/Sidebar";
+import Sidebar from "../../components/Sidebar3";
 import HeaderNavbar from "../../components/HeaderNavbar4";
 import Footer from "../../components/Footer";
 import { CalendarPlus, Calendar, Bell } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 export default function ParentDashboard() {
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f8f5f1] to-[#f3eae3] flex flex-col">
       <HeaderNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
@@ -18,11 +19,11 @@ export default function ParentDashboard() {
         {/* Dashboard Content */}
         <main className="flex-1 p-12 text-gray-800 flex flex-col justify-center items-center">
           <h1 className="text-6xl md:text-7xl font-extrabold mb-6 text-[#7B4B2A] tracking-wide drop-shadow-sm text-center">
-            Welcome, Parent!
+            {t("welcomeParent")}
           </h1>
 
           <p className="text-center text-lg text-[#8b5e34] mb-14 max-w-3xl">
-            Stay updated with your child’s activities.
+            {t("parentDashboardSubtitle")}
           </p>
 
           <div className="flex flex-col md:flex-row justify-center gap-14 w-full max-w-[1600px] px-6">
@@ -37,10 +38,10 @@ export default function ParentDashboard() {
                   <CalendarPlus size={70} className="text-[#6b4226]" />
                 </div>
                 <h2 className="text-3xl font-semibold text-[#6b4226] mb-4">
-                  Request a Visit
+                  {t("requestVisit")}
                 </h2>
                 <p className="text-lg text-[#7b5e3b]">
-                  Schedule a visit to meet your child or handle administrative needs easily.
+                  {t("requestVisitDesc")}
                 </p>
               </div>
             </Link>
@@ -55,10 +56,10 @@ export default function ParentDashboard() {
                 <Calendar size={70} className="text-[#6b4226]" />
               </div>
               <h2 className="text-3xl font-semibold text-[#6b4226] mb-4">
-                Visit History
+                {t("visitHistory")}
               </h2>
               <p className="text-lg text-[#7b5e3b]">
-                Track all your past and upcoming visit details conveniently.
+                {t("visitHistoryDesc")}
               </p>
             </div>
             </Link> 

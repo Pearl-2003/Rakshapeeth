@@ -6,8 +6,10 @@ import Footer from "../components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
+import { useTranslation } from "react-i18next";
 
 export default function LoginPage() {
+  const { t, i18n } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [role, setRole] = useState("admin");
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -15,7 +17,7 @@ export default function LoginPage() {
   const registerRef = useRef(null);
   const moreRef = useRef(null);
   const navigate = useNavigate();
-
+  const [lang, setLang] = useState(i18n.language || "en");
   // Forgot-password modal state & flow
   const [fpOpen, setFpOpen] = useState(false);
   const [fpStep, setFpStep] = useState(1); // 1: enter, 2: verify OTP, 3: reset pw, 4: success
@@ -65,107 +67,145 @@ const [email, setEmail] = useState("");
     }
   }, [resendTimer]);
 
-  // Simulated OTP sending
+// Send OTP
   const sendOtp = async () => {
-    setFpMessage("");
-    const val = identifier.trim();
-    if (!val) {
-      setFpMessage("Please enter your registered Email / ID.");
-      return;
-    }
+  setFpMessage("");
 
-    const roleDetected = detectRoleFromIdentifier(val);
-    setDetectedRole(roleDetected);
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 700));
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(otp);
-    setOtpSent(true);
-    setResendTimer(60);
-    setFpStep(2);
+  if (!identifier.trim()) {
     setFpMessage(
-      "OTP sent to registered Email & Phone (if available). Use the code received to verify."
-    );
+    role === "guard"
+    ? t("pleaseEnterGuardId")
+    : t("pleaseEnterEmail")
+);
+    return;
+  }
 
-    console.log(`[DEV] OTP for ${val} (${roleDetected}):`, otp);
-    setLoading(false);
-  };
+  setLoading(true);
 
-  const verifyOtp = async () => {
-    setFpMessage("");
-    if (!otpInput.trim()) {
-      setFpMessage("Enter the OTP you received.");
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        role,
+        identifier: identifier.trim(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setFpMessage(data.msg || t("failedSendOtp"));
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 500));
-
-    if (otpInput.trim() === generatedOtp) {
-      setFpStep(3);
-      setFpMessage("OTP verified — set your new password.");
-      setOtpInput("");
-    } else {
-      setFpMessage("Invalid OTP. Please check and try again.");
-    }
-    setLoading(false);
-  };
-
-  const resendOtp = async () => {
-    if (resendTimer > 0) return;
-    setFpMessage("");
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 700));
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(otp);
+    setFpStep(2);
+    setFpMessage(t("otpSentMsg"));
     setOtpSent(true);
     setResendTimer(60);
-    setFpMessage("A new OTP was sent.");
-    console.log(`[DEV] Resent OTP for ${identifier}:`, otp);
-    setLoading(false);
-  };
+  } catch (err) {
+    setFpMessage(t("serverErrorMsg"));
+  }
 
+  setLoading(false);
+};
+
+// Resend OTP
+const resendOtp = async () => {
+  if (resendTimer > 0) return;
+
+  setOtpInput("");
+  await sendOtp();
+};
+
+  // Verify OTP
+  const verifyOtp = async () => {
+  setFpMessage("");
+
+  if (!otpInput.trim()) {
+    setFpMessage(t("enterOtp"));
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        role,
+        identifier: identifier.trim(),
+        otp: otpInput.trim(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setFpMessage(data.msg || t("invalidOtp"));
+      setLoading(false);
+      return;
+    }
+
+    setFpStep(3);
+    setFpMessage(t("otpVerified"));
+  } catch (err) {
+    setFpMessage(t("verificationFailed"));
+  }
+
+  setLoading(false);
+};
+
+  // Reset Password
   const resetPassword = async () => {
-    setFpMessage("");
-    if (!newPassword || !confirmPassword) {
-      setFpMessage("Please fill both password fields.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setFpMessage("Passwords do not match.");
-      return;
-    }
-    if (newPassword.length < 6) {
-      setFpMessage("Password should be at least 6 characters.");
-      return;
-    }
+  setFpMessage("");
 
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
+  if (!newPassword || !confirmPassword) {
+    setFpMessage(t("fillAllFields"));
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setFpMessage(t("passwordMismatch"));
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        role,
+        identifier: identifier.trim(),
+        newPassword,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setFpMessage(data.msg || t("resetPasswordFailed"));
+      setLoading(false);
+      return;
+    }
 
     setFpStep(4);
-    setFpMessage("Password updated successfully!");
-    setLoading(false);
+  } catch (err) {
+    setFpMessage(t("serverErrorMsg"));
+  }
 
-    setTimeout(() => {
-      setFpOpen(false);
-      setFpStep(1);
-      setIdentifier("");
-      setDetectedRole(null);
-      setGeneratedOtp(null);
-      setOtpInput("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setFpMessage("");
-    }, 900);
-  };
+  setLoading(false);
+};
 
  const handleLogin = async () => {
   if (role === "admin") {
     if (!email || !password) {
-Swal.fire({ icon: 'warning', title: 'Missing Fields', text: 'Please fill all fields' });
+Swal.fire({ icon: 'warning', title: t("missingFields"),
+text: t("fillAll") });
 return;
 }
 if (role === "admin") {
@@ -176,17 +216,29 @@ headers: { "Content-Type": "application/json" },
 body: JSON.stringify({ email, password })
 });
 const data = await res.json();
-if (res.ok) {
-Swal.fire({ icon: 'success', title: 'Login Successful' }).then(() => {
-localStorage.setItem("adminToken", data.token);
-navigate("/admin/dashboard");
+if (res.ok)
+  {
+    localStorage.setItem("adminToken", data.token);
+    localStorage.setItem("role", "admin");
+Swal.fire({
+  icon: 'success',
+  title: 'Login Successful',
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 1200,
+  timerProgressBar: true
 });
-} else {
-Swal.fire({ icon: 'error', title: 'Invalid Credentials', text: data.message || 'Login failed' });
+
+navigate("/admin/dashboard");
+}
+ else {
+Swal.fire({ icon: 'error', title: t("invalidCredentials"), text: data.message || 'Login failed' });
 }
 } catch (err) {
 console.error("SERVER ERROR:", err);
-Swal.fire({ icon: 'error', title: 'Server Error', text: 'Please try again later' });
+Swal.fire({ icon: 'error', title: t("serverError"),
+text: t("tryLater") });
 }
 }
   } else if (role === "guard") {
@@ -194,8 +246,8 @@ Swal.fire({ icon: 'error', title: 'Server Error', text: 'Please try again later'
      if (!email) {
       Swal.fire({
         icon: "warning",
-        title: "Missing Field",
-        text: "Please enter Guard ID",
+        title: t("missingFields"),
+text: t("guardIdRequired"),
       });
       return;
     }
@@ -212,18 +264,18 @@ Swal.fire({ icon: 'error', title: 'Server Error', text: 'Please try again later'
       if (res.ok) {
         Swal.fire({
           icon: "success",
-          title: "Login Recorded",
+          title: t("loginRecorded"),
         }).then(() => {
           localStorage.setItem("guardToken", data.token);
 
           localStorage.setItem("role", "guard");
-localStorage.setItem("guardId", email); // email = guardId
+          localStorage.setItem("guardId", email); // email = guardId
           navigate("/guard/dashboard");
         });
       } else {
         Swal.fire({
           icon: "error",
-          title: "Login Failed",
+          title: t("loginFailed"),
           text: data.msg,
         });
       }
@@ -232,8 +284,8 @@ localStorage.setItem("guardId", email); // email = guardId
       console.error("SERVER ERROR:", err);
       Swal.fire({
         icon: "error",
-        title: "Server Error",
-        text: "Try again later",
+        title: t("serverError"),
+        text: t("tryLater"),
       });
   }
 }
@@ -250,24 +302,26 @@ else if(role === "parent") {
 
       const data = await res.json();
 
-      if (res.ok) {
+       if (res.ok) {
+        localStorage.setItem("parentToken", data.token);
+          localStorage.setItem("role", "parent");
         Swal.fire({ icon: "success", title: "Login Successful" }).then(() => {
-          localStorage.setItem("parentToken", data.token);
+          
           navigate("/parent/dashboard");
         });
       } else {
         Swal.fire({
           icon: "error",
-          title: "Invalid Credentials",
-          text: data.msg || "Login failed",
+          title: t("invalidCredentials"),
+text: data.msg || t("loginFailed"),
         });
       }
     } catch (err) {
       console.error("SERVER ERROR:", err);
       Swal.fire({
         icon: "error",
-        title: "Server Error",
-        text: "Please try again later",
+        title: t("serverError"),
+text: t("tryLater"),
       });
     }
 
@@ -303,7 +357,7 @@ else if(role === "parent") {
       {/* Main */}
       <main className="flex flex-col items-center pt-24 px-6 pb-20">
         <h1 className="text-4xl md:text-5xl font-extrabold text-brown mb-8">
-          Login Portal
+          {t("loginPortal")}
         </h1>
 
         <motion.div
@@ -324,7 +378,7 @@ else if(role === "parent") {
                     : "bg-cream text-[#7B4B2A] hover:shadow-md"
                 }`}
               >
-                {r.charAt(0).toUpperCase() + r.slice(1)}
+                {t(r)}
               </button>
             ))}
           </div>
@@ -343,7 +397,7 @@ else if(role === "parent") {
                   <>
                     <input
                       type="text"
-                      placeholder={role === "admin" ? "Admin ID" : "Guard ID"}
+                      placeholder={role === "admin" ? t("adminId") : t("guardId")}
                       value={email}
       onChange={(e) => setEmail(e.target.value)}  
                       className="w-full p-4 text-lg border border-[#7B4B2A]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B4B2A]"
@@ -360,14 +414,14 @@ else if(role === "parent") {
                   <>
                     <input
                       type="email"
-                      placeholder="Email"
+                      placeholder={t("email")}
                       value={email}
   onChange={(e) => setEmail(e.target.value)} 
                       className="w-full p-4 text-lg border border-[#7B4B2A]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B4B2A]"
                     />
                     <input
                       type="password"
-                      placeholder="Password"
+                      placeholder={t("password")}
                       value={password}
   onChange={(e) => setPassword(e.target.value)} 
                       className="w-full p-4 text-lg border border-[#7B4B2A]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B4B2A]"
@@ -379,7 +433,7 @@ else if(role === "parent") {
                   onClick={handleLogin}
                   className="w-full py-4 rounded-full bg-[#7B4B2A] text-cream font-bold text-lg hover:shadow-xl transition-all"
                 >
-                  Login
+                  {t("login")}
                 </button>
 
                 {/* Links */}
@@ -394,27 +448,26 @@ else if(role === "parent") {
                     }}
                     className="text-sm text-[#7B4B2A] hover:underline"
                   >
-                    Forgot Password?
+                    {t("forgotPassword")}
                   </button>
 
                   {role !== "admin" ? (
                     <div className="text-sm">
-                      Not registered?{" "}
-                      <Link
-                        to={
-                          role === "parent"
-                            ? "/parent-registration"
-                            : "/guard-registration"
-                        }
-                        className="text-[#7B4B2A] font-semibold hover:underline"
-                      >
-                        Register as{" "}
-                        {role === "parent" ? "Parent" : "Guard"}
-                      </Link>
-                    </div>
+                    {t("notRegistered")}{" "}
+                    <Link
+                      to={
+                        role === "parent"
+                          ? "/parent-registration"
+                          : "/guard-registration"
+                      }
+                      className="text-[#7B4B2A] font-semibold hover:underline"
+                    >
+                      {t("registerAs", { role: t(role) })}
+                    </Link>
+                  </div>
                   ) : (
                     <div className="text-sm text-brown/50">
-                      Admin registration not available
+                      {t("adminRegNA")}
                     </div>
                   )}
                 </div>
@@ -449,9 +502,9 @@ else if(role === "parent") {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-2xl font-bold">Forgot Password</h3>
+                  <h3 className="text-2xl font-bold">{t("forgotTitle")}</h3>
                   <p className="text-sm text-brown/60 mt-1">
-                    Enter your registered Email / ID to receive an OTP.
+                   {t("forgotDesc")}
                   </p>
                 </div>
                 <button
@@ -467,12 +520,12 @@ else if(role === "parent") {
                 {fpStep === 1 && (
                   <motion.div variants={formVariants} initial="hidden" animate="visible" exit="exit">
                     <label className="block text-sm mb-2 text-brown/70">
-                      Email / ID
+                      {t("emailOrId")}
                     </label>
                     <input
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="Enter your registered Email / ID"
+                      placeholder={t("enterEmailId")}
                       className="w-full p-3 border border-[#7B4B2A]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B4B2A]"
                     />
                     <div className="flex items-center justify-between mt-4">
@@ -482,14 +535,14 @@ else if(role === "parent") {
                           onClick={() => setFpOpen(false)}
                           className="px-3 py-2 rounded-lg bg-cream/80 text-brown hover:opacity-90"
                         >
-                          Cancel
+                          {t("cancel")}
                         </button>
                         <button
                           onClick={sendOtp}
                           disabled={loading}
                           className="px-4 py-2 rounded-lg bg-[#7B4B2A] text-cream font-semibold hover:shadow-lg"
                         >
-                          {loading ? "Sending..." : "Send OTP"}
+                          {loading ? t("sending") : t("sendOtp")}
                         </button>
                       </div>
                     </div>
@@ -500,12 +553,12 @@ else if(role === "parent") {
                 {fpStep === 2 && (
                   <motion.div variants={formVariants} initial="hidden" animate="visible" exit="exit">
                     <div className="mb-2 text-sm text-brown/70">
-                      We sent an OTP. Enter it below.
+                      {t("otpInstruction")}
                     </div>
                     <input
                       value={otpInput}
                       onChange={(e) => setOtpInput(e.target.value)}
-                      placeholder="Enter 6-digit OTP"
+                      placeholder={t("enterOtp")}
                       className="w-full p-3 text-lg border border-[#7B4B2A]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B4B2A]"
                     />
                     <div className="flex items-center justify-between mt-3">
@@ -519,27 +572,27 @@ else if(role === "parent") {
                           }}
                           className="px-3 py-2 rounded-lg bg-cream/80 text-brown hover:opacity-90"
                         >
-                          Back
+                          {t("back")}
                         </button>
                         <button
                           onClick={verifyOtp}
                           disabled={loading}
                           className="px-4 py-2 rounded-lg bg-[#7B4B2A] text-cream font-semibold hover:shadow-lg"
                         >
-                          {loading ? "Verifying..." : "Verify OTP"}
+                          {loading ? t("verifying") : t("verifyOtp")}
                         </button>
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
-                      <div className="text-brown/60">Didn't receive OTP?</div>
+                      <div className="text-brown/60">{t("didntReceiveOtp")}</div>
                       <button
                         onClick={resendOtp}
                         disabled={resendTimer > 0 || loading}
                         className="text-[#7B4B2A] font-semibold"
                       >
                         {resendTimer > 0
-                          ? `Resend in ${resendTimer}s`
-                          : "Resend OTP"}
+                          ? `${t("resendIn")} ${resendTimer}s`
+                          : t("resendOtp")}
                       </button>
                     </div>
                   </motion.div>
@@ -549,20 +602,20 @@ else if(role === "parent") {
                 {fpStep === 3 && (
                   <motion.div variants={formVariants} initial="hidden" animate="visible" exit="exit">
                     <div className="mb-2 text-sm text-brown/70">
-                      Set a new secure password.
+                      {t("setNewPassword")}
                     </div>
                     <input
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       type="password"
-                      placeholder="New password"
+                      placeholder={t("newPassword")}
                       className="w-full p-3 border border-[#7B4B2A]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B4B2A]"
                     />
                     <input
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       type="password"
-                      placeholder="Confirm new password"
+                      placeholder={t("confirmPassword")}
                       className="w-full p-3 mt-3 border border-[#7B4B2A]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7B4B2A]"
                     />
                     <div className="flex items-center justify-between mt-4">
@@ -582,7 +635,7 @@ else if(role === "parent") {
                           disabled={loading}
                           className="px-4 py-2 rounded-lg bg-[#7B4B2A] text-cream font-semibold hover:shadow-lg"
                         >
-                          {loading ? "Saving..." : "Save Password"}
+                          {loading ? t("saving") : t("savePassword")}
                         </button>
                       </div>
                     </div>
@@ -600,10 +653,10 @@ else if(role === "parent") {
                   >
                     <div className="text-3xl">✅</div>
                     <div className="mt-3 font-semibold">
-                      Password reset successful
+                      {t("resetSuccess")}
                     </div>
                     <div className="mt-2 text-sm text-brown/60">
-                      You can now login with your new password.
+                      {t("loginWithNew")}
                     </div>
                   </motion.div>
                 )}
@@ -611,3 +664,4 @@ else if(role === "parent") {
             </motion.div>
           </motion.div>
        )} </AnimatePresence> </div> ); }
+

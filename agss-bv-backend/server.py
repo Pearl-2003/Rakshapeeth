@@ -32,7 +32,7 @@ db = client["AGSS_BV"]
 students = db["students"]
 counters = db["counters"]   # 🔹 ADDED (for auto studentId)
 
-UPLOAD_FOLDER = r"E:\BV Gate Security\AGSS-BV\uploads"
+UPLOAD_FOLDER = r"D:\AGSS-BV\Uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Accuracy Constants (UNCHANGED)
@@ -829,45 +829,37 @@ def check_student_exists(student_id):
         }), 500
 @app.route("/verify-entry-face", methods=["POST"])
 
-def verify_entry_face():
-    student_id = request.form.get("student_id")
+@app.route("/admin/daily-entries", methods=["GET"])
+def get_daily_entries():
+    try:
+        # Get today's date in IST
+        system = get_system_date_time()
+        today = system["date"]
 
-    # Step 1: Face verification (from STEP 5)
-    face_match = True      # result from LBPH
-    blink_count = 1        # result from STEP 3
-
-    result = verify_student(face_match, blink_count)
-
-    if not result["allowed"]:
-        return jsonify({
-            "entryAllowed": False,
-            "reason": result["reason"]
-        }), 403
-
-    # Step 2: Check student already inside
-    active_log = db.studentlogs.find_one({
-        "studentId": student_id,
-        "status": "inside"
-    })
-
-    if active_log:
-        return jsonify({
-            "entryAllowed": False,
-            "reason": "Student already inside"
+        # Count from active logs
+        active_count = db.studentlogs.count_documents({
+            "entryDate": today
         })
 
-    # Step 3: Create entry log
-    db.studentlogs.insert_one({
-        "studentId": student_id,
-        "status": "inside",
-        "entryTime": datetime.now(),
-        "method": "face+liveness"
-    })
+        # Count from history logs
+        history_count = db.studentloghistory.count_documents({
+            "entryDate": today
+        })
 
-    return jsonify({
-        "entryAllowed": True,
-        "message": "Entry successful"
-    })
+        total_entries = active_count + history_count
+
+        return jsonify({
+            "date": today,
+            "activeEntries": active_count,
+            "historyEntries": history_count,
+            "totalEntries": total_entries
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
 # =========================================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=4000)
+

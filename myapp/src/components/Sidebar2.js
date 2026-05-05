@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-
+import { useTranslation } from "react-i18next";
 export default function Sidebar2({ sidebarOpen, setSidebarOpen }) {
   const [registerOpen, setRegisterOpen] = useState(false);
   const registerRef = useRef(null);
+  const { t } = useTranslation();
 
   // Close dropdown if clicked outside
   useEffect(() => {
@@ -25,7 +26,7 @@ export default function Sidebar2({ sidebarOpen, setSidebarOpen }) {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-extrabold tracking-wide text-cream drop-shadow-lg">
-          Menu
+          {t("menu")}
         </h2>
         <button
           onClick={() => setSidebarOpen(false)}
@@ -37,13 +38,13 @@ export default function Sidebar2({ sidebarOpen, setSidebarOpen }) {
 
       <nav className="flex flex-col space-y-2">
         {/* Sidebar Links */}
-        {[
-          { name: "Dashboard",  path: "/guard/dashboard" },
-          { name: "ManualEntry",  path: "/guard/manual-entry" },
-          { name: "IrisScan",  path: "/guard/verify-iris" },
-          { name: "NumberPlateScan",  path: "/guard/vehicle-verification" },
-          { name: "ExpectedVisitors",  path: "/guard/visitors" },
-        ].map((item) => (
+              {[
+        { name: t("dashboard"), path: "/guard/dashboard" },
+        { name: t("manualEntry"), path: "/guard/manual-entry" },
+        { name: t("irisScan"), path: "/guard/verify-iris" },
+        { name: t("numberPlateScan"), path: "/guard/vehicle-verification" },
+        { name: t("expectedVisitors"), path: "/guard/visitors" },
+      ].map((item) => (
           <Link
             key={item.name}
             to={item.path}

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 import HeaderNavbar from "../../components/HeaderNavbar4";
-import Sidebar from "../../components/Sidebar";
+import Sidebar from "../../components/Sidebar3";
 import Footer from "../../components/Footer";
-
+import { useTranslation } from "react-i18next";
 export default function ParentDashboard() {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("children");
   const [children, setChildren] = useState([]);
@@ -31,7 +32,7 @@ export default function ParentDashboard() {
         const data = await res.json();
         setChildren(data.children || []);
       } catch (err) {
-        Swal.fire("Error", "Unable to load children data", "error");
+        Swal.fire(t("error"), t("unableToLoadChildren"), "error");
       } finally {
         setLoading(false);
       }
@@ -57,7 +58,7 @@ export default function ParentDashboard() {
       setHistory(data.history || []);
       setActiveTab("history");
     } catch {
-      Swal.fire("Error", "Unable to load history", "error");
+      Swal.fire(t("error"), t("unableToLoadHistory"), "error");
     } finally {
       setLoading(false);
     }
@@ -93,10 +94,10 @@ export default function ParentDashboard() {
           {/* HEADING */}
           <div className="text-center mb-10 relative z-10">
             <h2 className="text-4xl font-extrabold text-brown">
-              Parent Dashboard
+              {t("parentDashboard")}
             </h2>
             <p className="text-brown/70 mt-2">
-              Monitor your child’s campus activity in real time
+              {t("monitorChildActivity")}
             </p>
           </div>
 
@@ -110,7 +111,7 @@ export default function ParentDashboard() {
                     ? "bg-brown text-cream shadow-lg"
                     : "text-brown hover:bg-brown/10"}`}
               >
-                My Children
+                {t("myChildren")}
               </button>
 
               <button
@@ -121,7 +122,7 @@ export default function ParentDashboard() {
                     ? "bg-brown text-cream shadow-lg"
                     : "text-brown hover:bg-brown/10 disabled:opacity-40"}`}
               >
-                History
+                {t("history")}
               </button>
             </div>
           </div>
@@ -143,7 +144,7 @@ export default function ParentDashboard() {
                     </h3>
 
                     <p className="mt-2 text-sm">
-                      Status:
+                      {t("status")}:
                       <span className={`ml-2 font-semibold
                         ${c.currentStatus === "inside"
                           ? "text-green-700"
@@ -153,17 +154,17 @@ export default function ParentDashboard() {
                     </p>
 
                     <p className="text-sm mt-1">
-                      Last Entry: {c.lastEntry || "—"}
+                      {t("lastEntry")}: {c.lastEntry || "—"}
                     </p>
                     <p className="text-sm">
-                      Last Exit: {c.lastExit || "—"}
+                      {t("lastExit")}: {c.lastExit || "—"}
                     </p>
                   </div>
                 ))}
 
                 {!loading && children.length === 0 && (
                   <p className="text-center col-span-2 text-brown/70">
-                    No children linked to this account.
+                    {t("noChildrenLinked")}
                   </p>
                 )}
               </div>
@@ -175,14 +176,14 @@ export default function ParentDashboard() {
 
     {!selectedStudent && (
       <p className="text-center text-brown/70 text-lg">
-        Please select a student from <b>My Children</b> tab to view history.
+       {t("selectStudentForHistory")}
       </p>
     )}
 
     {selectedStudent && (
       <>
         <h3 className="text-2xl font-bold text-brown mb-8">
-          {selectedStudent.name} — Detailed Entry / Exit History
+          {selectedStudent.name} — {t("detailedHistory")}
         </h3>
 
         <div className="space-y-6">
@@ -212,30 +213,30 @@ export default function ParentDashboard() {
 
                   {h.exitTime ? (
                     <span className="text-red-700 font-semibold">
-                      Exited
+                      {t("exited")}
                     </span>
                   ) : (
                     <span className="text-green-700 font-semibold">
-                      Currently Inside
+                      {t("currentlyInside")}
                     </span>
                   )}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4 text-sm text-brown">
                   <p>
-                    🟢 <b>Entry Time:</b> {h.entryTime || "—"}
+                    🟢 <b>{t("entryTime")}:</b> {h.entryTime || "—"}
                   </p>
                   <p>
-                    🔴 <b>Exit Time:</b> {h.exitTime || "Not exited yet"}
+                    🔴 <b>{t("exitTime")}:</b> {h.exitTime || t("notExitedYet")}
                   </p>
                   <p>
-                    ⏳ <b>Duration Inside Campus:</b> {duration}
+                    ⏳ <b>{t("durationInside")}:</b> {duration}
                   </p>
                   <p>
-                    🏫 <b>Status:</b>{" "}
+                    🏫 <b>{t("status")}:</b>{" "}
                     {h.exitTime
-                      ? "Student exited campus successfully"
-                      : "Student is currently inside campus"}
+                      ? t("studentExited")
+                      : t("studentInside")}
                   </p>
                 </div>
               </div>
@@ -244,7 +245,7 @@ export default function ParentDashboard() {
 
           {history.length === 0 && (
             <p className="text-center text-brown/60">
-              No entry–exit history available.
+              {t("noHistoryAvailable")}
             </p>
           )}
         </div>

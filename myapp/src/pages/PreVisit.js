@@ -7,11 +7,14 @@ import Footer from "../components/Footer";
 import Swal from "sweetalert2";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useTranslation } from "react-i18next";
+import Keyboard from "react-simple-keyboard";
+import "react-simple-keyboard/build/css/index.css";
 
 // Phone validation function
 function validatePhone(phone) {
   const digits = phone.replace(/\D/g, "");
-  return digits.length >= 6 && digits.length <= 15 && /^\d+$/.test(digits);
+  return digits.length === 10;
 }
 
 // ⭐ NEW: Validate Indian ID formats
@@ -31,25 +34,116 @@ export default function PreVisit() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-
+  const [isHindi, setIsHindi] = useState(false);
   const registerRef = useRef(null);
   const moreRef = useRef(null);
 
-  // ⭐ UPDATED: Added idProofType, vehicleNumber, dateOfVisit, numberOfPeople
+  const { t } = useTranslation();
+const [showKeyboard, setShowKeyboard] = useState(false);
+const [activeInput, setActiveInput] = useState(null);
+
+const hindiLayout = {
+  default: [
+    "१ २ ३ ४ ५ ६ ७ ८ ९ ० {bksp}",
+    "क ख ग घ ङ च छ ज झ ञ",
+    "ट ठ ड ढ ण त थ द ध न",
+    "प फ ब भ म य र ल व",
+    "श ष स ह",
+    "ा ि ी ु ू े ै ो ौ ं ः",
+    "{space} {del}"
+  ]
+};
+
+const display = {
+  "{bksp}": "⌫",
+  "{del}": "DEL",
+  "{space}": "SPACE"
+};
+
+const onKeyboardChange = (input) => {
+  if (!activeInput) return;
+
+  let value = input;
+
+  // Remove numbers for name fields
+  if (
+    activeInput === "visitorName" ||
+    activeInput === "studentName" ||
+    activeInput === "otherReason" ||
+    activeInput.startsWith("companions")
+  ) {
+    value = input.replace(/[0-9]/g, "");
+  }
+
+  // Update formData
+  if (activeInput.startsWith("companions")) {
+    const parts = activeInput.split("-");
+    const index = Number(parts[1]);
+    const field = parts[2]; // name or phone
+    const updated = [...formData.companions];
+    updated[index][field] = value;
+    setFormData({ ...formData, companions: updated });
+  } else {
+    setFormData({ ...formData, [activeInput]: value });
+  }
+};
+
+const onInputFocus = (field) => {
+  setActiveInput(field);
+  setShowKeyboard(true);
+};
   const [formData, setFormData] = useState({
     visitorName: "",
     studentName: "",
     studentId: "",
     idProofType: "",
     visitorIdProof: "",
+    vehicleType: "",        // ⭐ NEW
     vehicleNumber: "",
+      // ⭐ NEW (Public Transport fields)
+  driverName: "",
+  driverPhone: "",
+  driverVehicleNumber: "",
     dateOfVisit: "",
     numberOfPeople: "",
+    companions: [],         // ⭐ NEW
     reasonOfVisit: "",
     otherReason: "",
     phoneNumber: "",
   });
 
+ const handleNumberOfPeopleChange = (e) => {
+  const count = Number(e.target.value);
+
+  let companions = [];
+
+  if (count > 0) {
+    companions = [...(formData.companions || [])];
+
+    if (count > companions.length) {
+      for (let i = companions.length; i < count; i++) {
+        companions.push({ name: "", phone: "" });
+      }
+    } else {
+      companions = companions.slice(0, count);
+    }
+  }
+
+  setFormData({
+    ...formData,
+    numberOfPeople: count,
+    companions,
+  });
+};
+  const handleCompanionChange = (index, field, value) => {
+    const updated = [...formData.companions];
+    updated[index][field] = value;
+
+    setFormData({
+      ...formData,
+      companions: updated,
+    });
+  };
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   useEffect(() => {
@@ -61,17 +155,24 @@ export default function PreVisit() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value
+  }));
+};
 
   const reasonOptions = [
-    { value: "", label: "Select a reason" },
-    { value: "Academic Inquiry", label: "Academic Inquiry" },
-    { value: "Meet Child", label: "Meet Child" },
-    { value: "Delivery / Parcel", label: "Delivery / Parcel" },
-    { value: "Meeting Faculty", label: "Meeting Faculty" },
-    { value: "Alumini", label: "Alumini" },
-    { value: "Other", label: "Other" },
-  ];
+  { value: "", label: t("previsit.selectReason") },
+  { value: "Academic Inquiry", label: t("previsit.reason.academic") },
+  { value: "Meet Child", label: t("previsit.reason.meetChild") },
+  { value: "Delivery / Parcel", label: t("previsit.reason.delivery") },
+  { value: "Meeting Faculty", label: t("previsit.reason.meetingFaculty") },
+  { value: "Alumini", label: t("previsit.reason.alumni") },
+  { value: "Other", label: t("previsit.reason.other") },
+];
 
   const phoneValid = validatePhone(formData.phoneNumber);
 
@@ -84,7 +185,7 @@ export default function PreVisit() {
   formData.dateOfVisit.trim() !== "" &&
   formData.reasonOfVisit.trim() !== "" &&   // dropdown must have any value
   phoneValid &&
-  Number(formData.numberOfPeople) > 0 &&
+  Number(formData.numberOfPeople) >= 0 &&
   (
     formData.reasonOfVisit === "Other"   // only if "Other" selected
       ? (formData.otherReason && formData.otherReason.trim() !== "")
@@ -98,21 +199,27 @@ export default function PreVisit() {
   const errors = [];
 
   // ===== COMMON VALIDATION =====
-  if (!formData.visitorName.trim()) errors.push("Visitor Name is required");
+  if (!formData.visitorName.trim()) {
+  errors.push(t("previsit.errors.visitorNameRequired"));
+} else if (/\d/.test(formData.visitorName)) {
+  errors.push(t("previsit.errors.visitorNameNoNumbers"));
+}
 
  // ⭐ Student ID OPTIONAL
 if (formData.studentId.trim()) {
   // If studentId is entered, studentName should also be entered
   if (!formData.studentName.trim()) {
-    errors.push("Student Name is required if Student ID is provided");
+    errors.push(t("previsit.errors.studentNameRequired"));
   }
 }
 
   if (!formData.idProofType.trim())
-    errors.push("ID Proof Type is required");
-
+    errors.push(t("previsit.errors.idProofTypeRequired"));
+  if (formData.vehicleType === "Private" && !formData.vehicleNumber.trim()) {
+  errors.push(t("previsit.errors.vehicleNumberRequired"));
+}
   if (!formData.visitorIdProof.trim())
-    errors.push("ID Proof Number is required");
+    errors.push(t("previsit.errors.visitorIdProofRequired"));
 
   if (
     formData.idProofType &&
@@ -122,25 +229,62 @@ if (formData.studentId.trim()) {
   }
   // Optional: studentName diya hai but studentId nahi
 if (formData.studentName.trim() && !formData.studentId.trim()) {
-  errors.push("Student ID is required if Student Name is provided");
+  errors.push(t("previsit.errors.studentIdRequired"));
 }
 
-
-  if (!formData.dateOfVisit.trim())
-    errors.push("Date of Visit is required");
-
-  if (!formData.reasonOfVisit.trim())
-    errors.push("Reason of Visit is required");
-
-  if (formData.reasonOfVisit === "Other" && !formData.otherReason.trim()) {
-    errors.push("Please specify the reason for visit");
+// ⭐ Public Transport Validation
+if (formData.vehicleType === "Public") {
+  if (!formData.driverName.trim()) {
+    errors.push("Driver name is required");
+  } else if (/\d/.test(formData.driverName)) {
+    errors.push("Driver name cannot contain numbers");
   }
 
-  if (!phoneValid)
-    errors.push("Invalid Phone Number (6–15 digits)");
+  if (!validatePhone(formData.driverPhone)) {
+    errors.push("Driver phone number is invalid");
+  }
 
-  if (!formData.numberOfPeople || Number(formData.numberOfPeople) <= 0)
-    errors.push("Number of People must be greater than 0");
+  if (!formData.driverVehicleNumber.trim()) {
+    errors.push("Driver vehicle number is required");
+  }
+}
+  if (formData.dateOfVisit) {
+  const today = new Date();
+  const visitDate = new Date(formData.dateOfVisit);
+  today.setHours(0,0,0,0); // ignore time
+  if (visitDate < today) {
+    errors.push(t("previsit.errors.dateInPast"));
+  }
+}
+
+  if (!formData.reasonOfVisit.trim())
+    errors.push(t("previsit.errors.reasonOfVisitRequired"));
+
+  if (formData.reasonOfVisit === "Other" && !formData.otherReason.trim()) {
+    errors.push(t("previsit.errors.otherReasonRequired"));
+  }
+
+  if (!phoneValid){
+    errors.push(t("previsit.errors.phoneInvalid"));
+  }
+
+  if (formData.numberOfPeople === "" || Number(formData.numberOfPeople) < 0) {
+    errors.push(t("previsit.errors.numPeople"));
+  }
+if (Number(formData.numberOfPeople) > 0) {
+  (formData.companions || []).forEach((c, i) => {
+    if (!c.name.trim()) {
+      errors.push(`Companion ${i + 1} name is required`);
+    } else if (/\d/.test(c.name)) {
+      errors.push(`Companion ${i + 1} name cannot contain numbers`);
+    }
+
+    if (!validatePhone(c.phone)) {
+      errors.push(`Companion ${i + 1} phone is invalid`);
+    }
+  });
+}
+  
 
   if (errors.length > 0) {
     Swal.fire({
@@ -179,20 +323,24 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
     // =====================================================
     if (formData.reasonOfVisit === "Other") {
       const requestPayload = {
-        visitorName: formData.visitorName,
-        studentName: formData.studentName,
-        studentId: formData.studentId,
-        idProofType: formData.idProofType,
-        visitorIdProof: formData.visitorIdProof,
-        vehicleNumber: formData.vehicleNumber?.toUpperCase() || "",
-        dateOfVisit: formData.dateOfVisit,
-        numberOfPeople: Number(formData.numberOfPeople),
-        reasonOfVisit: "Other",
-        otherReason: formData.otherReason,
-        phoneNumber: formData.phoneNumber,
-        type: "non-parent" // ✅ AUTO
-      };
-
+      visitorName: formData.visitorName,
+      studentName: formData.studentName,
+      studentId: formData.studentId,
+      idProofType: formData.idProofType,
+      visitorIdProof: formData.visitorIdProof,
+      vehicleType: formData.vehicleType,      // ⭐ NEW
+      vehicleNumber: formData.vehicleNumber?.toUpperCase() || "",
+      driverName: formData.driverName,
+      driverPhone: formData.driverPhone,
+      driverVehicleNumber: formData.driverVehicleNumber,
+      companions: formData.companions,        // ⭐ NEW
+      dateOfVisit: formData.dateOfVisit,
+      numberOfPeople: Number(formData.numberOfPeople),
+      reasonOfVisit: "Other",
+      otherReason: formData.otherReason,
+      phoneNumber: formData.phoneNumber,
+      type: "non-parent"
+    };
       response = await fetch(
         "http://localhost:5000/api/requests/create",
         {
@@ -208,15 +356,20 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
     // =====================================================
     else {
       const occasionalPayload = {
-        visitorName: formData.visitorName,
-        noOfCompanions: Number(formData.numberOfPeople),
-        vehicleNo: formData.vehicleNumber?.toUpperCase() || "",
-        visitorType: "Non-Parent",
-        reason: formData.reasonOfVisit,
-        phoneNumber: formData.phoneNumber,
-        dateOfVisit: formData.dateOfVisit
-      };
-
+      visitorName: formData.visitorName,
+      driverName: formData.driverName,
+      driverPhone: formData.driverPhone,
+      driverVehicleNumber: formData.driverVehicleNumber,
+      noOfCompanions: Number(formData.numberOfPeople),
+      companions: formData.companions,      // ⭐ NEW
+      vehicleType: formData.vehicleType,    // ⭐ NEW
+      vehicleNo: formData.vehicleNumber?.toUpperCase() || "",
+      visitorType: "Non-Parent",
+      reason: formData.reasonOfVisit,
+      phoneNumber: formData.phoneNumber,
+      dateOfVisit: formData.dateOfVisit
+    };
+    console.log("Payload:", occasionalPayload);
       response = await fetch(
         "http://localhost:5000/api/occasional-visitors",
         {
@@ -251,9 +404,15 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
         studentId: "",
         idProofType: "",
         visitorIdProof: "",
+        vehicleType: "",
         vehicleNumber: "",
+        // ⭐ NEW (Public Transport fields)
+        driverName: "",
+        driverPhone: "",
+        driverVehicleNumber: "",
         dateOfVisit: "",
         numberOfPeople: "",
+        companions: [],
         reasonOfVisit: "",
         otherReason: "",
         phoneNumber: "",
@@ -305,8 +464,8 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="flex-grow w-full max-w-5xl mx-auto px-6 py-16 text-brown">
-        <h2 className="text-4xl md:text-5xl mb-12 text-center bg-clip-text text-transparent bg-gradient-to-r from-[#C79A63] via-[#8B5E3C] to-[#4B2E1E] font-extrabold tracking-wide leading-relaxed pb-2">
-          Pre-Visit Form
+        <h2 className="text-6xl md:text-7xl font-extrabold mb-6 text-[#7B4B2A] tracking-wide drop-shadow-sm text-center">
+          {t("previsit.title")}
         </h2>
 
         <form
@@ -316,57 +475,55 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
           {/* Visitor Name */}
           <div>
             <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              Visitor Name <span className="text-red-600">*</span>
+              {t("previsit.visitorName")} <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
               name="visitorName"
               value={formData.visitorName}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70 shadow-sm hover:shadow-md transition duration-300"
+              onFocus={() => onInputFocus("visitorName")}
+              placeholder={t("previsit.visitorplaceholderName")}
+              className="w-full px-4 py-3 rounded-xl border border-brown/50"
             />
-            {submitAttempted && !formData.visitorName.trim() && (
-              <p className="text-red-600 text-sm mt-1">This field is required</p>
-            )}
           </div>
           {/* Student Name */}
-<div>
-  <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-    Student Name 
-  </label>
-  <input
-    type="text"
-    name="studentName"
-    value={formData.studentName}
-    onChange={handleChange}
-    className="w-full px-4 py-3 rounded-xl border border-brown/50"
-  />
-  {submitAttempted && !formData.studentName.trim() && (
-    <p className="text-red-600 text-sm mt-1">Student Name is required</p>
-  )}
-</div>
-
-{/* Student ID */}
-<div>
-  <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-    Student ID 
-  </label>
-  <input
-    type="text"
-    name="studentId"
-    value={formData.studentId}
-    onChange={handleChange}
-    className="w-full px-4 py-3 rounded-xl border border-brown/50"
-  />
-  {submitAttempted && !formData.studentId.trim() && (
-    <p className="text-red-600 text-sm mt-1">Student ID is required</p>
-  )}
-</div>
+          <div>
+            <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
+              {t("previsit.studentName")}
+            </label>
+            <input
+              type="text"
+              name="studentName"
+              value={formData.studentName}
+              onChange={handleChange}
+              onFocus={() => onInputFocus("studentName")}
+              placeholder={t("previsit.studentplaceholderName")}
+              className="w-full px-4 py-3 rounded-xl border border-brown/50"
+            />
+            
+          </div>
+          
+          {/* Student ID */}
+          <div>
+            <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
+              {t("previsit.studentId")}
+            </label>
+            <input
+              type="text"
+              placeholder={t("previsit.studentplaceholderId")}
+              name="studentId"
+              value={formData.studentId}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl border border-brown/50"
+            />
+            
+          </div>
 
           {/* ID Proof Type */}
           <div>
             <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              ID Proof Type <span className="text-red-600">*</span>
+              {t("previsit.idProofType")} <span className="text-red-600">*</span>
             </label>
             <select
               name="idProofType"
@@ -374,23 +531,24 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70 shadow-sm hover:shadow-md transition duration-300 bg-white"
             >
-              <option value="">Select ID Proof</option>
-              <option value="PAN">PAN Card</option>
-              <option value="AADHAAR">Aadhaar Card</option>
-              <option value="DL">Driving License</option>
+              <option value="">{t("previsit.selectIdProof")}</option>
+              <option value="PAN">{t("pan")}</option>
+              <option value="AADHAAR">{t("aadhaar")}</option>
+              <option value="DL">{t("drivingLicense")}</option>
             </select>
             {submitAttempted && !formData.idProofType.trim() && (
-              <p className="text-red-600 text-sm mt-1">Please select ID proof type</p>
+              <p className="text-red-600 text-sm mt-1">{t("previsit.errors.selectIdProof")}</p>
             )}
           </div>
 
           {/* Visitor ID Proof */}
           <div>
             <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              ID Proof Number <span className="text-red-600">*</span>
+              {t("previsit.idProofNumber")} <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
+              placeholder={t("previsit.idNumberPlaceholder")}
               name="visitorIdProof"
               value={formData.visitorIdProof}
               onChange={handleChange}
@@ -400,29 +558,93 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
               formData.idProofType &&
               !validateID(formData.idProofType, formData.visitorIdProof) && (
                 <p className="text-red-600 text-sm mt-1">
-                  Invalid {formData.idProofType} format. Please enter a valid ID.
+                   {t("previsit.errors.invalidId", { type: formData.idProofType })}
                 </p>
               )}
           </div>
+            {/* Vehicle Type */}
+            <div>
+              <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
+                {t("previsit.vehicleType")}
+              </label>
+              <select
+                name="vehicleType"
+                value={formData.vehicleType}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border border-brown/50 bg-white"
+              >
+                <option value="">{t("previsit.selectVehicleType")}</option>
+                <option value="Private">{t("previsit.privateVehicle")}</option>
+                <option value="Public">{t("previsit.publicTransport")}</option>
+                <option value="None">{t("previsit.withoutVehicle")}</option>
+              </select>
+            </div>
+                    {/* Vehicle Number */}
+            {formData.vehicleType === "Private" && (
+              <div>
+                <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
+                  {t("previsit.vehicleNumber")}
+                </label>
+                <input
+                  type="text"
+                  placeholder={t("previsit.vehicleNumberPlaceholder")}
+                  name="vehicleNumber"
+                  value={formData.vehicleNumber}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-brown/50"
+                />
+              </div>
+            )}
 
-          {/* Vehicle Number */}
-          <div>
-            <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              Vehicle Number
-            </label>
-            <input
-              type="text"
-              name="vehicleNumber"
-              value={formData.vehicleNumber}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70 shadow-sm hover:shadow-md transition duration-300"
-            />
-          </div>
+          {/* ⭐ Public Transport Driver Details */}
+{formData.vehicleType === "Public" && (
+  <div className="space-y-4">
+    
+    <div>
+      <label className="block mb-2 font-semibold text-sm text-brown/80">
+        Driver Name
+      </label>
+      <input
+        type="text"
+        name="driverName"
+        value={formData.driverName}
+        onChange={handleChange}
+        className="w-full px-4 py-3 rounded-xl border border-brown/50"
+      />
+    </div>
 
+    <div>
+      <label className="block mb-2 font-semibold text-sm text-brown/80">
+        Driver Phone Number
+      </label>
+      <input
+        type="tel"
+        name="driverPhone"
+        value={formData.driverPhone}
+        onChange={handleChange}
+        className="w-full px-4 py-3 rounded-xl border border-brown/50"
+      />
+    </div>
+
+    <div>
+      <label className="block mb-2 font-semibold text-sm text-brown/80">
+        Vehicle Number
+      </label>
+      <input
+        type="text"
+        name="driverVehicleNumber"
+        value={formData.driverVehicleNumber}
+        onChange={handleChange}
+        className="w-full px-4 py-3 rounded-xl border border-brown/50"
+      />
+    </div>
+
+  </div>
+)}
           {/* ⭐ NEW: Date of Visit */}
           <div>
             <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              Date of Visit <span className="text-red-600">*</span>
+              {t("previsit.dateOfVisit")} <span className="text-red-600">*</span>
             </label>
             <input
               type="date"
@@ -432,14 +654,14 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
               className="w-full px-4 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70 shadow-sm hover:shadow-md transition duration-300 bg-white"
             />
             {submitAttempted && !formData.dateOfVisit.trim() && (
-              <p className="text-red-600 text-sm mt-1">Please select a date</p>
+              <p className="text-red-600 text-sm mt-1">{t("previsit.errors.selectDate")}</p>
             )}
           </div>
 
           {/* Reason of Visit */}
           <div>
             <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              Reason of Visit <span className="text-red-600">*</span>
+              {t("previsit.reasonOfVisit")} <span className="text-red-600">*</span>
             </label>
             <select
               name="reasonOfVisit"
@@ -454,7 +676,7 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
               ))}
             </select>
             {submitAttempted && !formData.reasonOfVisit && (
-              <p className="text-red-600 text-sm mt-1">Please select a reason</p>
+              <p className="text-red-600 text-sm mt-1">{t("previsit.errors.selectReason")}</p>
             )}
           </div>
 
@@ -462,7 +684,7 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
           {(formData.reasonOfVisit === "Other" || formData.reasonOfVisit === "Alumini") && (
             <div>
               <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-                Please Specify <span className="text-red-600">*</span>
+                {t("previsit.pleaseSpecify")} <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
@@ -472,7 +694,7 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
                 className="w-full px-4 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70 shadow-sm hover:shadow-md transition duration-300"
               />
               {submitAttempted && !formData.otherReason.trim() && (
-                <p className="text-red-600 text-sm mt-1">Please specify the reason</p>
+                <p className="text-red-600 text-sm mt-1">{t("previsit.errors.specifyReason")}</p>
               )}
             </div>
           )}
@@ -480,38 +702,71 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
           {/* Phone Number */}
           <div>
             <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              Phone Number <span className="text-red-600">*</span>
+              {t("previsit.phoneNumber")} <span className="text-red-600">*</span>
             </label>
             <input
               type="tel"
+              placeholder={t("previsit.phoneNumberPlaceholder")}
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
               className="w-full px-4 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70 shadow-sm hover:shadow-md transition duration-300"
             />
             {submitAttempted && !phoneValid && (
-              <p className="text-red-600 text-sm mt-1">Please enter a valid phone number (6-15 digits)</p>
+              <p className="text-red-600 text-sm mt-1">{t("previsit.errors.invalidPhone")}</p>
             )}
           </div>
 
           {/* Number of People */}
           <div>
             <label className="block mb-2 font-semibold text-sm uppercase tracking-wider text-brown/80">
-              Number of People <span className="text-red-600">*</span>
+              {t("previsit.numberOfPeople")} <span className="text-red-600">*</span>
             </label>
             <input
               type="number"
-              min="1"
+              placeholder={t("previsit.numberOfPeoplePlaceholder")}
+              min="0"
               name="numberOfPeople"
               value={formData.numberOfPeople}
-              onChange={handleChange}
+              onChange={handleNumberOfPeopleChange}
               className="w-full px-4 py-3 rounded-xl border border-brown/50 focus:outline-none focus:ring-2 focus:ring-brown/70 shadow-sm hover:shadow-md transition duration-300"
             />
-            {submitAttempted && !formData.numberOfPeople.trim() && (
-              <p className="text-red-600 text-sm mt-1">Please enter number of people</p>
-            )}
+            {submitAttempted && formData.numberOfPeople === "" && (
+  <p className="text-red-600 text-sm mt-1">{t("previsit.errors.numPeople")}</p>
+)}
           </div>
+          {/* Companion Details */}
+          {formData.companions.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-lg">{t("previsit.companionDetails")}</h3>
 
+              {formData.companions.map((companion, index) => (
+                <div key={index} className="grid md:grid-cols-2 gap-4">
+                  
+                  <input
+                    type="text"
+                    placeholder={t("previsit.companionName", { index: index + 1 })}
+                    value={companion.name}
+                    onChange={(e) =>
+                      handleCompanionChange(index, "name", e.target.value)
+                    }
+                    className="px-4 py-3 rounded-xl border border-brown/50"
+                  />
+
+                  <input
+                    type="tel"
+                    placeholder={t("previsit.companionPhone", { index: index + 1 })}
+                    value={companion.phone}
+                    onChange={(e) =>
+                      handleCompanionChange(index, "phone", e.target.value)
+                    }
+                    className="px-4 py-3 rounded-xl border border-brown/50"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+ 
           {/* Submit Button */}
           <button
             type="submit"
@@ -528,9 +783,28 @@ if (formData.studentName.trim() && !formData.studentId.trim()) {
               tracking-wider
             "
           >
-            Submit Form
+           {t("previsit.submit")}
           </button>
         </form>
+        {showKeyboard && (
+  <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl p-4 z-50">
+    <Keyboard
+      layoutName="default"
+      layout={hindiLayout}
+      onChange={onKeyboardChange}
+    />
+    <div className="flex justify-end mt-2">
+      <button
+        type="button"
+        onClick={() => setShowKeyboard(false)}
+        className="px-4 py-2 bg-[#8B5E3C] text-white rounded-lg"
+      >
+        कीबोर्ड बंद करें
+      </button>
+    </div>
+  </div>
+)}
+
       </main>
 
       <Footer />

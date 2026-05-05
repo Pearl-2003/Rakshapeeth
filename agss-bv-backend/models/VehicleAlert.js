@@ -1,3 +1,4 @@
+// models/VehicleAlert.js
 const mongoose = require("mongoose");
 
 const VehicleAlertSchema = new mongoose.Schema(
@@ -5,7 +6,8 @@ const VehicleAlertSchema = new mongoose.Schema(
     /* ================= VEHICLE INFO ================= */
     vehicleNo: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
 
     /* ================= ALERT INFO ================= */
@@ -17,7 +19,8 @@ const VehicleAlertSchema = new mongoose.Schema(
 
     reason: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
 
     severity: {
@@ -26,7 +29,7 @@ const VehicleAlertSchema = new mongoose.Schema(
       default: "MEDIUM"
     },
 
-    /* ================= GUARD ================= */
+    /* ================= GUARD INFO ================= */
     raisedBy: {
       guardId: {
         type: String,
@@ -55,12 +58,12 @@ const VehicleAlertSchema = new mongoose.Schema(
     },
 
     /* ================= GUARD NOTIFICATION ================= */
+    // ⚠️ NO DEFAULT HERE
     guardNotification: {
       message: String,
       status: {
         type: String,
-        enum: ["UNSEEN", "SEEN"],
-        default: "UNSEEN"
+        enum: ["UNSEEN", "SEEN"]
       },
       seenAt: Date
     }

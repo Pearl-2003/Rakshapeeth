@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import Logo from "../assets/logo.png";
 import { Link } from "react-router-dom";
-
+import { useTranslation } from "react-i18next";
 export default function HeaderNavbar({ sidebarOpen, setSidebarOpen }) {
   const [registerOpen, setRegisterOpen] = useState(false);
   const registerRef = useRef(null);
-
+  const { i18n, t } = useTranslation();
+  const changeLanguage = (lng) => {
+  i18n.changeLanguage(lng);
+  localStorage.setItem("lang", lng);
+};
   useEffect(() => {
     function handleClickOutside(event) {
       if (registerRef.current && !registerRef.current.contains(event.target)) {
@@ -74,29 +78,59 @@ export default function HeaderNavbar({ sidebarOpen, setSidebarOpen }) {
           {/* Desktop Links */}
           <div className="hidden md:flex space-x-8">
             <Link to="/" className="font-semibold hover:text-cream-200 transition duration-300">
-              Home
+            {t("home")}
             </Link>
+
             <Link to="/about" className="font-semibold hover:text-cream-200 transition duration-300">
-              About
+            {t("about")}
             </Link>
+
             <Link to="/customer-care" className="font-semibold hover:text-cream-200 transition duration-300">
-              Customer Care
+            {t("customerCare")}
             </Link>
+
             <Link to="/contact-us" className="font-semibold hover:text-cream-200 transition duration-300">
-              Contact Us
+            {t("contactUs")}
             </Link>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative hidden md:block">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-60 md:w-72 px-4 py-2 rounded-full text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cream-200 focus:shadow-lg transition-all duration-300 transform hover:scale-105"
-          />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
-        </div>
+        <div className="hidden md:flex items-center">
+  <div className="relative flex items-center w-44 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-inner overflow-hidden">
+
+    {/* Sliding Pill */}
+    <div
+      className={`absolute top-1 left-1 h-8 w-1/2 rounded-full bg-gradient-to-r from-[#8B5E3C] to-[#4B2E1E] shadow-lg transition-all duration-300 ease-in-out ${
+        i18n.language === "hi" ? "translate-x-full" : ""
+      }`}
+    ></div>
+
+    {/* English */}
+    <button
+      onClick={() => changeLanguage("en")}
+      className={`relative z-10 w-1/2 text-sm font-semibold tracking-wide transition-all duration-300 ${
+        i18n.language === "en"
+          ? "text-white scale-105"
+          : "text-brown/80 hover:text-brown"
+      }`}
+    >
+      English
+    </button>
+
+    {/* Hindi */}
+    <button
+      onClick={() => changeLanguage("hi")}
+      className={`relative z-10 w-1/2 text-sm font-semibold tracking-wide transition-all duration-300 ${
+        i18n.language === "hi"
+          ? "text-white scale-105"
+          : "text-brown/80 hover:text-brown"
+      }`}
+    >
+      हिंदी
+    </button>
+
+  </div>
+</div>
       </nav>
     </div>
   );

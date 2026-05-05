@@ -3,13 +3,15 @@ import React, { useState, useRef, useEffect } from "react";
 import Logo from "../assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
+import { logout } from "../utils/auth"; // 👈 Import logout function
+  import { logoutAndClearHistory } from "../utils/clearHistory";
 
 export default function HeaderNavbar({ sidebarOpen, setSidebarOpen, adminName }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false); 
-const [avatarTrigger, setAvatarTrigger] = useState(0); 
+  const [avatarTrigger, setAvatarTrigger] = useState(0); 
 
-  const [avatarUpdateFlag, setAvatarUpdateFlag] = useState(0); // trigger re-render
+  const [avatarUpdateFlag, setAvatarUpdateFlag] = useState(0);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -26,28 +28,14 @@ const [avatarTrigger, setAvatarTrigger] = useState(0);
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-useEffect(() => {
-  function refreshAvatar() {
-    setAvatarTrigger(prev => prev + 1);
-  }
-
-  window.addEventListener("avatarChanged", refreshAvatar);
-  window.addEventListener("storage", refreshAvatar);
-
-  return () => {
-    window.removeEventListener("avatarChanged", refreshAvatar);
-    window.removeEventListener("storage", refreshAvatar);
-  };
-}, []);
-
-  // 🔥 Listen for avatar changes from avatar.html
+  
   useEffect(() => {
     function refreshAvatar() {
-      setAvatarUpdateFlag((prev) => prev + 1); // force re-render
+      setAvatarTrigger(prev => prev + 1);
     }
 
     window.addEventListener("avatarChanged", refreshAvatar);
-    window.addEventListener("storage", refreshAvatar); // another tab changes
+    window.addEventListener("storage", refreshAvatar);
 
     return () => {
       window.removeEventListener("avatarChanged", refreshAvatar);
@@ -55,10 +43,43 @@ useEffect(() => {
     };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    navigate("/login");
-  };
+  // 🔥 Listen for avatar changes from avatar.html
+  useEffect(() => {
+    function refreshAvatar() {
+      setAvatarUpdateFlag((prev) => prev + 1);
+    }
+
+    window.addEventListener("avatarChanged", refreshAvatar);
+    window.addEventListener("storage", refreshAvatar);
+
+    return () => {
+      window.removeEventListener("avatarChanged", refreshAvatar);
+      window.removeEventListener("storage", refreshAvatar);
+    };
+  }, []);
+
+  // ✅ FIXED: Use the role from localStorage
+  // const handleLogout = () => {
+  //   const role = localStorage.getItem("role"); // Get current role
+    
+  //   if (role === "parent") {
+  //     logout("parent");
+  //   } else if (role === "admin") {
+  //     logout("admin");
+  //   } else if (role === "guard") {
+  //     logout("guard");
+  //   } else {
+  //     // Fallback
+  //     localStorage.clear();
+  //       navigate("/login", { replace: true }); // 👈 This replaces current history entry
+
+  //   }
+  // };
+
+const handleLogout = () => {
+  const role = localStorage.getItem("role");
+  logoutAndClearHistory(role, navigate);
+};
 
   return (
     <div className="font-sans bg-gradient-to-b from-cream to-cream/90">
@@ -87,21 +108,19 @@ useEffect(() => {
           </button>
 
           <div className="hidden md:flex space-x-8">
-            <Link to="/" className="font-semibold hover:text-cream-200">Home</Link>
-            <Link to="/about" className="font-semibold hover:text-cream-200">About</Link>
-            <Link to="/customer-care" className="font-semibold hover:text-cream-200">Customer Care</Link>
-            <Link to="/ContactUs" className="font-semibold hover:text-cream-200">Contact Us</Link>
+            <Link to="/parent/dashboard" className="font-semibold hover:text-cream-200">Home</Link>
+            <Link to="/customer-care-parent" className="font-semibold hover:text-cream-200">Customer Care</Link>
+            <Link to="/ContactUs-parent" className="font-semibold hover:text-cream-200">Contact Us</Link>
           </div>
         </div>
 
         {/* Avatar + Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <Avatar
-  photoURL={localStorage.getItem("avatar") || userPhoto}
-  name={adminName}
-  onClick={() => setDropdownOpen(!dropdownOpen)}
-/>
-
+            photoURL={localStorage.getItem("avatar") || userPhoto}
+            name={adminName}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          />
 
           {dropdownOpen && (
             <div className="absolute right-0 mt-3 bg-white text-black rounded-2xl shadow-2xl w-52 p-3 z-50">
@@ -109,11 +128,11 @@ useEffect(() => {
                 {adminName || "User"}
               </div>
               <button
-  onClick={() => setShowAvatarModal(true)}
-  className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg mt-2"
->
-  Choose Avatar 🎨
-</button>
+                onClick={() => setShowAvatarModal(true)}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg mt-2"
+              >
+                Choose Avatar 🎨
+              </button>
 
               <button
                 onClick={() => navigate("/parent/settings")}
@@ -132,52 +151,49 @@ useEffect(() => {
           )}
         </div>
       </nav>
+      
       {showAvatarModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[999]">
-    <div className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-lg">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[999]">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-lg">
+            <h2 className="text-xl font-bold mb-4 text-center text-brown">
+              Select Your Avatar
+            </h2>
 
-      <h2 className="text-xl font-bold mb-4 text-center text-brown">
-        Select Your Avatar
-      </h2>
+            <div className="grid grid-cols-3 gap-4 max-h-80 overflow-y-auto">
+              {[
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/1.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/2.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/3.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/4.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/5.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/6.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/1.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/2.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/3.png",
+                "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/4.png"
+              ].map((url, index) => (
+                <img
+                  key={index}
+                  src={url}
+                  onClick={() => {
+                    localStorage.setItem("avatar", url);
+                    window.dispatchEvent(new Event("avatarChanged"));
+                    setShowAvatarModal(false);
+                  }}
+                  className="w-24 h-24 rounded-xl object-cover cursor-pointer hover:scale-110 hover:ring-4 hover:ring-brown transition"
+                />
+              ))}
+            </div>
 
-      <div className="grid grid-cols-3 gap-4 max-h-80 overflow-y-auto">
-
-        {[
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/1.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/2.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/3.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/4.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/5.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/male/6.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/1.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/2.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/3.png",
-          "https://raw.githubusercontent.com/Ashwinvalento/cartoon-avatar/master/lib/images/female/4.png"
-        ].map((url, index) => (
-          <img
-            key={index}
-            src={url}
-            onClick={() => {
-              localStorage.setItem("avatar", url);
-              window.dispatchEvent(new Event("avatarChanged"));
-              setShowAvatarModal(false);
-            }}
-            className="w-24 h-24 rounded-xl object-cover cursor-pointer hover:scale-110 hover:ring-4 hover:ring-brown transition"
-          />
-        ))}
-
-      </div>
-
-      <button
-        onClick={() => setShowAvatarModal(false)}
-        className="mt-5 w-full py-2 bg-brown text-white rounded-xl hover:bg-opacity-90"
-      >
-        Close
-      </button>
-    </div>
-  </div>
-)}
-
+            <button
+              onClick={() => setShowAvatarModal(false)}
+              className="mt-5 w-full py-2 bg-brown text-white rounded-xl hover:bg-opacity-90"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

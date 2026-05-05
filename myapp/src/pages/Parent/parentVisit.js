@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 import HeaderNavbar from "../../components/HeaderNavbar4";
-import Sidebar from "../../components/Sidebar";
+import Sidebar from "../../components/Sidebar3";
 import Footer from "../../components/Footer";
-
+import { useTranslation } from "react-i18next";
 export default function ParentVisitRequest() {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
    const [loading, setLoading] = useState(false);
   const registerRef = useRef(null);
   const moreRef = useRef(null);
-
+  const validatePhone = (phone) => {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length === 10;
+};
   useEffect(() => {
     function handleClickOutside(event) {
       if (registerRef.current && !registerRef.current.contains(event.target)) {
@@ -26,110 +30,178 @@ export default function ParentVisitRequest() {
   }, []);
 
   const [formData, setFormData] = useState({
-    dateOfVisit: "",
-    vehicleNo: "",
-    noOfCompanions: ""
-  });
+  dateOfVisit: "",
+  vehicleType: "",
+  vehicleNo: "",
+  noOfCompanions: "",
+  companions: [],
+
+  // ⭐ NEW
+  driverName: "",
+  driverPhone: "",
+  driverVehicleNumber: ""
+});
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+  const handleCompanionCountChange = (e) => {
+  const count = Number(e.target.value);
+  let companions = [...formData.companions];
 
+  if (count > companions.length) {
+    for (let i = companions.length; i < count; i++) {
+      companions.push({ name: "" });
+    }
+  } else {
+    companions = companions.slice(0, count);
+  }
+
+  setFormData({
+    ...formData,
+    noOfCompanions: count,
+    companions
+  });
+};
+
+const handleCompanionChange = (index, field, value) => {
+  const updated = [...formData.companions];
+  updated[index][field] = value;
+
+  setFormData({
+    ...formData,
+    companions: updated
+  });
+};
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const { dateOfVisit, noOfCompanions } = formData;
+  const { dateOfVisit, noOfCompanions, vehicleType, vehicleNo, companions } = formData;
+  const errors = [];
 
-    // ❌ Frontend validation
-    if (!dateOfVisit || noOfCompanions === "") {
+  // 1️⃣ Required fields
+  // ⭐ Public transport validation
+if (vehicleType === "Public") {
+  if (!formData.driverName.trim()) {
+    errors.push(t("driverNameRequired"));
+  }
+
+  if (!validatePhone(formData.driverPhone)) {
+    errors.push(t("driverPhoneInvalid"));
+  }
+
+  if (!formData.driverVehicleNumber.trim()) {
+    errors.push(t("driverVehicleRequired"));
+  }
+}
+  if (!dateOfVisit) errors.push(t("fillDateOfVisit"));
+  if (noOfCompanions === "") errors.push(t("fillNoOfCompanions"));
+
+  // 2️⃣ Vehicle number required if Private
+  if (vehicleType === "Private" && (!vehicleNo || vehicleNo.trim() === "")) {
+    errors.push(t("fillVehicleNo"));
+  }
+
+  // 3️⃣ Companion validations
+  if (Number(noOfCompanions) > 0) {
+    (companions || []).forEach((c, i) => {
+      if (!c.name.trim()) errors.push(`${t("companionName")} ${i + 1} ${t("required")}`);
+      if (!validatePhone(c.phone || "")) errors.push(`${t("companionPhone")} ${i + 1} ${t("invalidPhone")}`);
+    });
+  }
+
+  // Show errors if any
+  if (errors.length > 0) {
+    Swal.fire({
+      icon: "error",
+      title: t("formErrors"),
+      html: errors.map((err) => `<p>${err}</p>`).join(""),
+      confirmButtonColor: "#6b4226",
+    });
+    return;
+  }
+
+  // ✅ Proceed with submission
+  const token = localStorage.getItem("parentToken");
+
+  if (!token) {
+    Swal.fire({
+      icon: "error",
+      title: t("unauthorized"),
+      text: t("loginAgain"),
+      confirmButtonColor: "#6b4226"
+    });
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const res = await fetch(
+      "http://localhost:5000/api/parent/visit-request",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          vehicleNo: formData.vehicleNo?.toUpperCase()
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (res.status === 409) {
       Swal.fire({
-        icon: "warning",
-        title: "Missing Fields",
-        text: "Please fill all required fields before submitting.",
+        icon: "info",
+        title: t("requestAlreadyMade"),
+        text: data.message || t("alreadyRequested"),
         confirmButtonColor: "#6b4226"
       });
       return;
     }
 
-    const token = localStorage.getItem("parentToken");
-
-    if (!token) {
+    if (!res.ok) {
       Swal.fire({
         icon: "error",
-        title: "Unauthorized",
-        text: "Please login again to continue.",
+        title: t("requestFailed"),
+        text: data.message || t("somethingWentWrong"),
         confirmButtonColor: "#6b4226"
       });
       return;
     }
 
-    try {
-      setLoading(true);
+    Swal.fire({
+      icon: "success",
+      title: t("visitConfirmed"),
+      text: t("visitSubmittedSuccess"),
+      confirmButtonColor: "#6b4226"
+    });
 
-      const res = await fetch(
-        "http://localhost:5000/api/parent/visit-request",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(formData)
-        }
-      );
+    // Reset form
+    setFormData({
+      dateOfVisit: "",
+      vehicleType: "",
+      vehicleNo: "",
+      noOfCompanions: "",
+      companions: []
+    });
 
-      const data = await res.json();
-
-      // 🔴 DUPLICATE REQUEST
-      if (res.status === 409) {
-        Swal.fire({
-          icon: "info",
-          title: "Request Already Made",
-          text: data.message || "You have already requested a visit for this date.",
-          confirmButtonColor: "#6b4226"
-        });
-        return;
-      }
-
-      // ❌ OTHER ERRORS
-      if (!res.ok) {
-        Swal.fire({
-          icon: "error",
-          title: "Request Failed",
-          text: data.message || "Something went wrong. Please try again.",
-          confirmButtonColor: "#6b4226"
-        });
-        return;
-      }
-
-      // ✅ SUCCESS
-      Swal.fire({
-        icon: "success",
-        title: "Visit Confirmed 🎉",
-        text: "Your visit request has been submitted successfully.",
-        confirmButtonColor: "#6b4226"
-      });
-
-      // 🔄 Reset form
-      setFormData({
-        dateOfVisit: "",
-        vehicleNo: "",
-        noOfCompanions: ""
-      });
-
-    } catch (error) {
-      console.error(error);
-      Swal.fire({
-        icon: "error",
-        title: "Server Error",
-        text: "Unable to connect to server. Please try later.",
-        confirmButtonColor: "#6b4226"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      icon: "error",
+      title: t("serverError"),
+      text: t("unableToConnect"),
+      confirmButtonColor: "#6b4226"
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen font-sans bg-gradient-to-b from-cream to-cream/90 flex flex-col">
@@ -166,11 +238,11 @@ export default function ParentVisitRequest() {
           {/* HEADING */}
           <div className="relative z-10 text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-extrabold tracking-wide text-brown drop-shadow-sm">
-              Visit Request
+             {t("visitRequest")}
             </h2>
             <div className="w-20 h-1 bg-gradient-to-r from-brown to-brown/60 mx-auto my-4 rounded-full"></div>
             <p className="text-brown/70 text-lg max-w-md mx-auto">
-              Submit your visit details securely and get real-time updates.
+              {t("visitSubtitle")}
             </p>
           </div>
 
@@ -180,7 +252,7 @@ export default function ParentVisitRequest() {
             {/* Date */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-brown/80">
-                Date of Visit
+                {t("dateOfVisit")}
               </label>
               <input
                 type="date"
@@ -192,43 +264,136 @@ export default function ParentVisitRequest() {
               />
             </div>
 
-            {/* Vehicle */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-brown/80">
-                Vehicle Number
-              </label>
-              <input
-                type="text"
-                name="vehicleNo"
-                value={formData.vehicleNo}
-                onChange={handleChange}
-                placeholder="RJ14 AB 1234"
-                className="w-full px-5 py-4 rounded-2xl bg-white/90 focus:outline-none focus:ring-4 focus:ring-brown/30 shadow-inner uppercase text-brown"
-              />
-            </div>
+            {/* Vehicle Type */}
+<div>
+  <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-brown/80">
+    {t("vehicleType")}
+  </label>
 
-            {/* Companions */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-brown/80">
-                Number of Companions
-              </label>
-              <input
-                type="number"
-                name="noOfCompanions"
-                value={formData.noOfCompanions}
-                onChange={handleChange}
-                min="0"
-                required
-                className="w-full px-5 py-4 rounded-2xl bg-white/90 focus:outline-none focus:ring-4 focus:ring-brown/30 shadow-inner text-brown"
-              />
-            </div>
+  <select
+    name="vehicleType"
+    value={formData.vehicleType}
+    onChange={handleChange}
+    className="w-full px-5 py-4 rounded-2xl bg-white/90 focus:outline-none focus:ring-4 focus:ring-brown/30 shadow-inner text-brown"
+  >
+    <option value="">{t("selectVehicleType")}</option>
+    <option value="Private">{t("privateVehicle")}</option>
+    <option value="Public">{t("publicTransport")}</option>
+    <option value="None">{t("withoutVehicle")}</option>
+  </select>
+</div>
 
+{/* Vehicle Number */}
+{formData.vehicleType === "Private" && (
+  <div>
+    <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-brown/80">
+      {t("vehicleNumber")}
+    </label>
+
+    <input
+      type="text"
+      name="vehicleNo"
+      value={formData.vehicleNo}
+      onChange={handleChange}
+      placeholder="RJ14 AB 1234"
+      className="w-full px-5 py-4 rounded-2xl bg-white/90 focus:outline-none focus:ring-4 focus:ring-brown/30 shadow-inner uppercase text-brown"
+    />
+  </div>
+)}
+{/* ⭐ Driver Details (ONLY for Public Transport) */}
+{formData.vehicleType === "Public" && (
+  <div className="space-y-4">
+
+    <input
+      type="text"
+      name="driverName"
+      placeholder={t("driverName")}
+      value={formData.driverName}
+      onChange={handleChange}
+      className="w-full px-5 py-4 rounded-2xl bg-white/90 shadow-inner"
+    />
+
+    <input
+      type="tel"
+      name="driverPhone"
+      placeholder={t("driverPhone")}
+      value={formData.driverPhone}
+      onChange={(e) => {
+        const value = e.target.value;
+        if (/^\d{0,10}$/.test(value)) {
+          handleChange(e);
+        }
+      }}
+      maxLength="10"
+      className="w-full px-5 py-4 rounded-2xl bg-white/90 shadow-inner"
+    />
+
+    <input
+      type="text"
+      name="driverVehicleNumber"
+      placeholder={t("driverVehicleNumber")}
+      value={formData.driverVehicleNumber}
+      onChange={handleChange}
+      className="w-full px-5 py-4 rounded-2xl bg-white/90 shadow-inner uppercase"
+    />
+  </div>
+)}
+
+            {/* Number of Companions */}
+<div>
+  <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-brown/80">
+    {t("numberOfCompanions")}
+  </label>
+
+  <input
+    type="number"
+    name="noOfCompanions"
+    value={formData.noOfCompanions}
+    onChange={handleCompanionCountChange}
+    min="0"
+    className="w-full px-5 py-4 rounded-2xl bg-white/90 focus:outline-none focus:ring-4 focus:ring-brown/30 shadow-inner text-brown"
+  />
+</div>
+
+{/* Companion Details */}
+{formData.companions.map((companion, index) => (
+  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    {/* Companion Name */}
+    <input
+      type="text"
+      placeholder={`${t("companionName")} ${index + 1}`}
+      value={companion.name}
+      onChange={(e) =>
+        handleCompanionChange(index, "name", e.target.value)
+      }
+      className="px-5 py-4 rounded-2xl bg-white/90 focus:outline-none focus:ring-4 focus:ring-brown/30 shadow-inner"
+    />
+
+    {/* Companion Phone */}
+    <input
+  type="tel"
+  placeholder={`${t("companionPhone")} ${index + 1}`}
+  value={companion.phone || ""}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    if (/^\d{0,10}$/.test(value)) {
+      handleCompanionChange(index, "phone", value);
+    }
+  }}
+  maxLength="10"
+  className="px-5 py-4 rounded-2xl bg-white/90 focus:outline-none focus:ring-4 focus:ring-brown/30 shadow-inner"
+/>
+
+  </div>
+))}
             {/* SUBMIT */}
             <button
               type="submit"
               className="w-full mt-10 py-4 rounded-2xl bg-gradient-to-r from-brown to-[#5a351d] text-cream text-lg font-bold tracking-wide shadow-[0_15px_40px_rgba(91,53,29,0.5)] hover:shadow-[0_20px_50px_rgba(91,53,29,0.6)] hover:scale-[1.03] transition-all duration-300"
             >
-              Submit Visit Request
+              {t("submitVisitRequest")}
             </button>
           </form>
         </div>

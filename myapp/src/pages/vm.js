@@ -7,7 +7,10 @@ import { Link } from "react-router-dom";
 import HeaderNavbar from "../components/HeaderNavbar";
 import Sidebar from "../components/Sidebar";
 import Footer from "../components/Footer";
+import notifyVideoHindi from "../assets/veh-Hindi.mp4";
+import { useTranslation } from "react-i18next";
 export default function NotifyPage() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -64,7 +67,7 @@ export default function NotifyPage() {
     {/* Video */}
     <div className="w-full md:w-1/2 flex justify-center">
       <video
-        src={notifyVideoFile}
+        src={i18n.language === "hi" ? notifyVideoHindi : notifyVideoFile}
         controls
         className="w-full max-w-[350px] md:max-w-full aspect-[9/16] rounded-3xl shadow-2xl border-4 border-cream hover:scale-105 transform transition-all duration-500"
       />
@@ -73,38 +76,38 @@ export default function NotifyPage() {
    {/* Description */}
 <div className="w-full md:w-1/2 text-brown space-y-6 text-justify">
   <h2 className="text-3xl md:text-4xl font-extrabold tracking-wider text-center md:text-left relative">
-    Vehicle Management
+    {t("vehicleManagement")}
     <span className="block h-1 w-24 bg-gradient-to-r from-brown to-brown/70 rounded-full mt-2 mx-auto md:mx-0 animate-pulse-slow"></span>
   </h2>
 
   <p className="text-lg md:text-xl leading-relaxed text-brown/90 first-letter:text-6xl first-letter:font-bold first-letter:text-brown/80 first-letter:mr-2">
-    AGSS-BV’s <span className="font-semibold">Vehicle Management</span> system, powered by Rakshapeeth, brings intelligent, automated control to campus vehicle access. As a vehicle approaches the gate, its number plate is captured and processed using advanced license plate recognition technology. The system then classifies the vehicle into one of four categories:
+   {t("vehiclePara1")}
   </p>
 
   <p className="text-lg md:text-xl leading-relaxed text-brown/90">
-    <span className="font-semibold">Whitelisted Vehicles</span> – Permanent campus vehicles, such as those belonging to staff, faculty, or registered students, are instantly recognized. The gate opens automatically, and the vehicle’s entry is logged for record-keeping.
+    {t("vehiclePara2")}
   </p>
 
   <p className="text-lg md:text-xl leading-relaxed text-brown/90">
-    <span className="font-semibold">Occasional Visitors</span> – Vehicles from parents, guests, or vendors who have pre-registered for a specific time slot are verified automatically for access.
+   {t("vehiclePara3")}
   </p>
 
   <p className="text-lg md:text-xl leading-relaxed text-brown/90">
-    <span className="font-semibold">Blacklisted Vehicles</span> – Vehicles flagged for security concerns are immediately denied entry, and security personnel are alerted in real time.
+    {t("vehiclePara4")}
   </p>
 
   <p className="text-lg md:text-xl leading-relaxed text-brown/90">
-    <span className="font-semibold">Unregistered Vehicles</span> – Any vehicle not present in the database triggers a secure manual approval process. Campus security can verify the visitor’s credentials and grant temporary access while maintaining detailed records.
+    {t("vehiclePara5")}
   </p>
 
   <p className="text-lg md:text-xl leading-relaxed text-brown/90">
-    This system ensures that every vehicle entering the campus is accurately monitored and accounted for. By automating recognition, verification, and logging, AGSS-BV enhances security, reduces congestion at the gate, and streamlines the vehicle entry process. Whether it is routine staff traffic or an occasional visitor, the Vehicle Management system delivers <span className="italic text-brown/80">safety, efficiency, and complete control</span> over campus access.
+    {t("vehiclePara6")}
   </p>
       <button
         onClick={() => navigate("/")}
         className="mt-6 px-8 py-3 bg-brown text-cream rounded-2xl shadow-lg hover:-translate-y-1 hover:shadow-2xl hover:bg-gradient-to-r from-brown/90 to-brown/70 transition-all duration-300 font-semibold"
       >
-        ← Back to Home
+        {t("backHome")}
       </button>
     </div>
   </div>

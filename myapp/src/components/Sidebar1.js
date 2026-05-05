@@ -33,6 +33,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           { name: "Manage Whitelist", icon: "✅", path: "/admin/whitelist" },
           { name: "Manage Occasional Visitors", icon: "👥", path: "/admin/occasional-visitors" },
           { name: "Manage Students", icon: "🎓", path: "/admin/students" },
+          { name: "Add Guard", icon: "🎓", path: "/guard-registration" },
           { name: "Manage Guard", icon: "🛡️", path: "/admin/guards" },
           { name: "Gatepass", icon: "⏳", path: "/admin/create-gatepass" },
           { name: "Active Gatepasses", icon: "⏳", path: "/admin/active-gatepasses" },

@@ -5,10 +5,11 @@ import Sidebar from "../../components/Sidebar2";
 import Footer from "../../components/Footer";
 import GuardAlertModal from "../../components/GuardAlertModal";
 import GuardNotificationsBar from "../../components/GuardNotificationsBar";
-
+import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
 
 export default function VerifyIris() {
+  const { t } = useTranslation();
   const [studentId, setStudentId] = useState("");
   const [image, setImage] = useState(null);
   const [status, setStatus] = useState("");
@@ -79,12 +80,12 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
   /* ================= VERIFY LOGIC (UNCHANGED) ================= */
   const handleVerify = async () => {
   if (!studentId) {
-    Swal.fire("Missing ID", "Student ID is required", "warning");
+    Swal.fire(t("missingId"), t("studentIdRequired"), "warning");
     return;
   }
 
   if (!image) {
-    Swal.fire("Missing Image", "Capture or upload iris image", "warning");
+    Swal.fire(t("missingImage"), t("captureOrUploadIris"), "warning");
     return;
   }
 
@@ -107,16 +108,16 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
     // ❌ Iris mismatch (common for entry & exit)
     if (data.match === false) {
   setLoading(false);
-  setFailureReason("Iris mismatch");
+  setFailureReason(t("irisMismatch"));
   setAlertType("ENTRY");
 
   Swal.fire({
-    title: "Access Denied ❌",
-    text: "Iris mismatch",
+    title: t("accessDenied"),
+    text: t("irisMismatch"),
     icon: "error",
     showCancelButton: true,
-    confirmButtonText: "🚨 Send Alert to Admin",
-    cancelButtonText: "Close"
+    confirmButtonText: t("sendAlertAdmin"),
+    cancelButtonText: t("close"),
   }).then((result) => {
     if (result.isConfirmed) {
       Swal.close();          // 🔥 ADD THIS
@@ -124,7 +125,7 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
     }
   });
 
-  setStatus("NOT MATCH ❌ Access Denied");
+  setStatus(t("notMatchAccessDenied"));
   return;
 }
 
@@ -134,14 +135,14 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
     if (data.match === true && data.entryAllowed === true) {
       setLoading(false);
       Swal.fire({
-        title: "Entry Allowed ✅",
+        title: t("entryAllowed"),
         html: `
-          <b>Date:</b> ${data.entryDate}<br/>
-          <b>Time:</b> ${data.entryTime}
+          <b>{t("Entrydate")}:</b> ${data.entryDate}<br/>
+          <b>{t("Entrytime")}:</b> ${data.entryTime}
         `,
         icon: "success"
       });
-      setStatus("MATCH ✅ Entry Allowed");
+      setStatus(t("matchEntryAllowed"));
       return;
     }
 
@@ -162,24 +163,24 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
       // ❌ Iris mismatch
      if (data.match === false) {
   setLoading(false);
-  setFailureReason("Iris mismatch");
+  setFailureReason(t("irisMismatch"));
   setAlertType("EXIT");   // ✅ FIXED
 
   Swal.fire({
-    title: "Access Denied ❌",
-    text: "Iris mismatch",
-    icon: "error",
-    showCancelButton: true,
-    confirmButtonText: "🚨 Send Alert to Admin",
-    cancelButtonText: "Close"
-  }).then((result) => {
+  title: t("accessDenied"),
+  text: t("irisMismatch"),
+  icon: "error",
+  showCancelButton: true,
+  confirmButtonText: t("sendAlertAdmin"),
+  cancelButtonText: t("close1")
+}).then((result) => {
     if (result.isConfirmed) {
       Swal.close();        // 🔥 ADD THIS
       setAlertOpen(true);
     }
   });
 
-  setStatus("NOT MATCH ❌ Access Denied");
+  setStatus(t("notMatchAccessDenied"));
   return;
 }
 
@@ -190,12 +191,12 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
   setAlertType("EXIT");
 
   Swal.fire({
-    title: "Exit Denied 🚫",
+    title: t("exitDenied"),
     text: data.reason,
     icon: "warning",
     showCancelButton: true,
-    confirmButtonText: "🚨 Send Alert to Admin",
-    cancelButtonText: "Close"
+    confirmButtonText: t("sendAlertAdmin"),
+    cancelButtonText: t("close1")
   }).then((result) => {
     if (result.isConfirmed) {
       Swal.close();        // 🔥 ADD THIS
@@ -203,7 +204,7 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
     }
   });
 
-  setStatus(`DENIED ❌ ${data.reason}`);
+  setStatus(`${t("denied")} ❌ ${data.reason}`);
   return;
 }
 
@@ -212,28 +213,33 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
       // ✅ Exit allowed
       if (data.match === true && data.exitAllowed === true) {
         Swal.fire({
-          title: "Exit Allowed ✅",
+          title: t("exitAllowed"),
+          
           html: `
-            <b>Date:</b> ${data.exitDate}<br/>
-            <b>Time:</b> ${data.exitTime}
+            <b>${t("date")}:</b> ${data.entryDate}<br/>
+            <b>${t("time")}:</b> ${data.entryTime}
           `,
-          icon: "success",
-          confirmButtonText: "Proceed"
+                    icon: "success",
+          confirmButtonText: t("proceed")
         });
-        setStatus("MATCH ✅ Exit Allowed");
+        setStatus(t("matchExitAllowed"));
         return;
       }
     }
 
     /* ================= OTHER ENTRY DENIAL ================= */
     setLoading(false);
-    Swal.fire("Entry Denied 🚫", data.reason || "Entry not permitted", "warning");
-    setStatus(`DENIED ❌ ${data.reason}`);
+    Swal.fire(
+  t("studentNotFound"),
+  data.reason || t("entryNotPermitted"),
+  "warning"
+);
+    setStatus(`${t("denied")} ❌ ${data.reason}`);
 
   } catch (err) {
     setLoading(false);
-    Swal.fire("Error", err.message, "error");
-    setStatus("ERROR ❌ " + err.message);
+    Swal.fire(t("error"), err.message, "error");
+    setStatus(`${t("error")} ❌ ${err.message}`);
   }
 };
 
@@ -262,36 +268,50 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
           w-full max-w-2xl p-12"
         >
           <h2 className="text-3xl font-extrabold text-center text-[#5C3A21]">
-            Iris Verification
+            {t("irisVerification")}
           </h2>
 
           <p className="text-center text-[#7B4B2A] opacity-80 mb-10">
-            Automated Gate Security System – AGSS-BV
+            {t("agssTitle")}
           </p>
 
           {/* STUDENT ID */}
          <label className="block text-sm font-semibold mb-2 text-[#5C3A21]">
-            Student ID
+            {t("studentId")}
           </label>
           <input
             className="w-full p-4 rounded-2xl border border-[#7B4B2A]/40 bg-white
             focus:ring-2 focus:ring-[#7B4B2A] outline-none text-lg"
-            placeholder="BTBTC23001"
+            placeholder={t("enterStudentId")}
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
           />
 
           {/* FILE UPLOAD */}
           <label className="block text-sm font-semibold mt-6 mb-2 text-[#5C3A21]">
-            Upload Iris Image (optional)
+            {t("uploadIrisOptional")}
           </label>
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="w-full text-sm"
-            onChange={(e) => setImage(e.target.files[0])}
-          />
+          <div className="flex items-center gap-4 mt-2">
+  <label
+    htmlFor="irisUpload"
+    className="px-5 py-3 bg-[#7B4B2A] text-white rounded-xl cursor-pointer hover:opacity-90 transition"
+  >
+    {t("chooseFile")}
+  </label>
+
+  <span className="text-sm text-[#5C3A21]">
+    {image ? image.name : t("noFileChosen")}
+  </span>
+
+  <input
+    id="irisUpload"
+    type="file"
+    accept="image/*"
+    capture="environment"
+    className="hidden"
+    onChange={(e) => setImage(e.target.files[0])}
+  />
+</div>
 
           <div className="my-8 h-px bg-[#7B4B2A]/20"></div>
 
@@ -302,7 +322,7 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
               text-[#fffaf4] py-4 rounded-2xl font-bold text-lg
               shadow-lg hover:scale-[1.03] transition"
             >
-              Open Camera
+              {t("openCamera")}
             </button>
           )}
 
@@ -319,13 +339,13 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
                 className="w-full mt-4 bg-[#7B4B2A] text-[#fffaf4]
                 py-4 rounded-2xl font-semibold text-lg"
               >
-                Capture Photo
+                {t("capturePhoto")}
               </button>
               <button
                 onClick={stopCamera}
                 className="w-full mt-3 bg-red-600 text-white py-3 rounded-2xl"
               >
-                Close Camera
+                {t("closeCamera")}
               </button>
             </>
           )}
@@ -342,13 +362,13 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
                 className="w-full mt-4 bg-[#7B4B2A] text-[#fffaf4]
                 py-4 rounded-2xl font-semibold"
               >
-                Recapture
+                {t("recapture")}
               </button>
               <button
                 onClick={stopCamera}
                 className="w-full mt-3 bg-red-600 text-white py-3 rounded-2xl"
               >
-                Close Camera
+                {t("closeCamera")}
               </button>
             </>
           )}
@@ -361,12 +381,12 @@ const [alertType, setAlertType] = useState(""); // ENTRY or EXIT
             text-[#fffaf4] py-4 rounded-2xl font-bold text-lg
             shadow-xl hover:scale-[1.03] transition"
           >
-            Verify Iris
+            {t("verifyIris")}
           </button>
 
           {loading && (
             <p className="text-center mt-6 text-[#7B4B2A] text-lg">
-              Verifying iris…
+             {t("verifyingIris")}
             </p>
           )}
 

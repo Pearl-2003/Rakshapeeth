@@ -33,14 +33,18 @@ router.get("/occasional-visitors", async (req, res) => {
 router.post("/occasional-visitors", async (req, res) => {
   try {
     const {
-      visitorName,
-      noOfCompanions,
-      vehicleNo,
-      visitorType,
-      reason,
-      phoneNumber,
-      dateOfVisit
-    } = req.body;
+  visitorName,
+  noOfCompanions,
+  vehicleNo,
+  vehicleType,   // ⭐ NEW
+  driverName,    // ⭐ NEW
+  driverPhone,   // ⭐ NEW
+  driverVehicleNumber, // ⭐ NEW
+  visitorType,
+  reason,
+  phoneNumber,
+  dateOfVisit
+} = req.body;
 
     if (
       !visitorName ||
@@ -56,14 +60,18 @@ router.post("/occasional-visitors", async (req, res) => {
     }
 
     const visitor = new OccasionalVisitor({
-      visitorName,
-      noOfCompanions,
-      vehicleNo,
-      visitorType,
-      reason,
-      phoneNumber,
-      dateOfVisit: new Date(dateOfVisit)
-    });
+  visitorName,
+  noOfCompanions,
+  vehicleNo,
+  vehicleType,   // ⭐ NEW
+  driverName,
+  driverPhone,
+  driverVehicleNumber,
+  visitorType,
+  reason,
+  phoneNumber,
+  dateOfVisit: new Date(dateOfVisit)
+});
 
     await visitor.save();
 

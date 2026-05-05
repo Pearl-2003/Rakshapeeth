@@ -1,16 +1,20 @@
+// models/SecurityAlert.js
 const mongoose = require("mongoose");
 
 const SecurityAlertSchema = new mongoose.Schema(
   {
+    /* ================= STUDENT INFO ================= */
     studentId: {
       type: String,
       required: true
     },
+
     studentName: {
       type: String,
       required: true
     },
 
+    /* ================= ALERT INFO ================= */
     alertType: {
       type: String,
       enum: ["ENTRY", "EXIT"],
@@ -19,7 +23,8 @@ const SecurityAlertSchema = new mongoose.Schema(
 
     reason: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
 
     severity: {
@@ -38,6 +43,7 @@ const SecurityAlertSchema = new mongoose.Schema(
       default: ""
     },
 
+    /* ================= GUARD INFO ================= */
     raisedBy: {
       guardId: {
         type: String,
@@ -54,6 +60,7 @@ const SecurityAlertSchema = new mongoose.Schema(
       gateName: String
     },
 
+    /* ================= ADMIN ACTION ================= */
     status: {
       type: String,
       enum: ["PENDING", "APPROVED", "REJECTED", "HOLD"],
@@ -67,16 +74,17 @@ const SecurityAlertSchema = new mongoose.Schema(
       reason: String,
       actionAt: Date
     },
-    guardNotification: {
-  message: String,
-  status: {
-    type: String,
-    enum: ["UNSEEN", "SEEN"],
-    default: "UNSEEN"
-  },
-  seenAt: Date
-}
 
+    /* ================= GUARD NOTIFICATION ================= */
+    // ⚠️ NO DEFAULT HERE
+    guardNotification: {
+      message: String,
+      status: {
+        type: String,
+        enum: ["UNSEEN", "SEEN"]
+      },
+      seenAt: Date
+    }
   },
   { timestamps: true }
 );

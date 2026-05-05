@@ -13,6 +13,8 @@ router.post("/", async (req, res) => {
     const {
       visitorName,
       noOfCompanions,
+      companions,
+      vehicleType,
       vehicleNo,
       visitorType,
       reason,
@@ -58,11 +60,15 @@ router.post("/", async (req, res) => {
         message: "Occasional visit already registered for this date"
       });
     }
-
+    if (req.body.vehicleType === "None") {
+      req.body.vehicleNo = undefined;
+    }
     // 💾 SAVE OCCASIONAL VISITOR
-    const newVisitor = new OccasionalVisitor({
+   const newVisitor = new OccasionalVisitor({
       visitorName,
       noOfCompanions,
+      companions: companions || [],
+      vehicleType: vehicleType || "None",
       vehicleNo: vehicleNo ? vehicleNo.toUpperCase() : undefined,
       visitorType,
       reason,

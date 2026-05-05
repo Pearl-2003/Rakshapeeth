@@ -14,6 +14,14 @@ const GuardSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   email: { type: String },
   password: { type: String, required: true },
+  resetOtp: {
+  type: String
+},
+
+otpExpiry: {
+  type: Date
+},
+
 
   createdAt: { type: Date, default: Date.now }
 });

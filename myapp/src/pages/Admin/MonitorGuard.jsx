@@ -185,49 +185,53 @@ export default function MonitorGuard() {
               </thead>
 
               <tbody>
-                {tableData.map((duty, index) => (
-                  <tr
-                    key={index}
-                    className="border-b hover:bg-cream/50 transition"
-                  >
-                    <td className="py-3 px-4 font-semibold">
-                      {duty.guard.guardId}
-                    </td>
+  {tableData.map((duty, index) => (
+    <tr key={index} className="border-b hover:bg-cream/50 transition">
+      
+      <td className="py-3 px-4 font-semibold">
+        {duty.guard?.guardId }
+      </td>
 
-                    <td className="py-3 px-4">
-                      {duty.guard.firstName} {duty.guard.lastName}
-                    </td>
+      <td className="py-3 px-4">
+        {duty.guard
+          ? `${duty.guard.firstName} ${duty.guard.lastName}`
+          : "Unknown Guard"}
+      </td>
 
-                    <td className="py-3 px-4">{duty.guard.phone}</td>
+      <td className="py-3 px-4">
+        {duty.guard?.phone || "-"}
+      </td>
 
-                    <td className="py-3 px-4">
-                      {new Date(duty.loginAt).toLocaleString()}
-                    </td>
+      <td className="py-3 px-4">
+        {new Date(duty.loginAt).toLocaleString()}
+      </td>
 
-                    <td className="py-3 px-4 font-mono">
-                      {formatDuration(duty.duration)}
-                    </td>
+      <td className="py-3 px-4 font-mono">
+        {formatDuration(duty.duration)}
+      </td>
 
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-3 py-1 rounded-full font-semibold text-sm ${
-                          duty.logoutAt
-                            ? duty.autoClosed
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {duty.logoutAt
-                          ? duty.autoClosed
-                            ? "AUTO CLOSED"
-                            : "OFF DUTY"
-                          : "ON DUTY"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+      <td className="py-3 px-4">
+        <span
+          className={`px-3 py-1 rounded-full font-semibold text-sm ${
+            duty.logoutAt
+              ? duty.autoClosed
+                ? "bg-yellow-100 text-yellow-700"
+                : "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          {duty.logoutAt
+            ? duty.autoClosed
+              ? "AUTO CLOSED"
+              : "OFF DUTY"
+            : "ON DUTY"}
+        </span>
+      </td>
+
+    </tr>
+  ))}
+</tbody>
+
             </table>
           )}
         </div>

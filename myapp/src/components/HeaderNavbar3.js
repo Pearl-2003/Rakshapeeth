@@ -3,8 +3,9 @@ import React, { useState, useRef, useEffect } from "react";
 import Logo from "../assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
-
+import { useTranslation } from "react-i18next";
 export default function HeaderNavbar({ sidebarOpen, setSidebarOpen, adminName }) {
+  const { t, i18n } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false); 
 const [avatarTrigger, setAvatarTrigger] = useState(0); 
@@ -123,12 +124,41 @@ useEffect(() => {
           </button>
 
           <div className="hidden md:flex space-x-8">
-            <Link to="/" className="font-semibold hover:text-cream-200">Home</Link>
-            <Link to="/about" className="font-semibold hover:text-cream-200">About</Link>
-            <Link to="/customer-care" className="font-semibold hover:text-cream-200">Customer Care</Link>
-            <Link to="/ContactUs" className="font-semibold hover:text-cream-200">Contact Us</Link>
+            <Link to="/guard/dashboard" className="font-semibold hover:text-cream-200">{t("home")}</Link>
+            {/* <Link to="/about" className="font-semibold hover:text-cream-200">About</Link> */}
+            <Link to="/customer-care-guard" className="font-semibold hover:text-cream-200">{t("customerCare")}</Link>
+            <Link to="/ContactUs-guard" className="font-semibold hover:text-cream-200">{t("contactUs")}</Link>
           </div>
         </div>
+
+        {/* Language Toggle */}
+<div className="hidden md:flex items-center ml-auto mr-6">
+  <div className="flex bg-cream/20 backdrop-blur-md rounded-full p-1 shadow-inner">
+
+    <button
+      onClick={() => i18n.changeLanguage("en")}
+      className={`px-4 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${
+        i18n.language === "en"
+          ? "bg-white text-brown shadow-md"
+          : "text-white hover:bg-white/20"
+      }`}
+    >
+      English
+    </button>
+
+    <button
+      onClick={() => i18n.changeLanguage("hi")}
+      className={`px-4 py-1 rounded-full text-sm font-semibold transition-all duration-300 ${
+        i18n.language === "hi"
+          ? "bg-white text-brown shadow-md"
+          : "text-white hover:bg-white/20"
+      }`}
+    >
+      हिंदी
+    </button>
+
+  </div>
+</div>
 
         {/* Avatar + Dropdown */}
         <div className="relative" ref={dropdownRef}>
@@ -142,27 +172,27 @@ useEffect(() => {
           {dropdownOpen && (
             <div className="absolute right-0 mt-3 bg-white text-black rounded-2xl shadow-2xl w-52 p-3 z-50">
               <div className="text-center font-semibold border-b pb-2">
-                {adminName || "User"}
+                {adminName || t("user")}
               </div>
               <button
   onClick={() => setShowAvatarModal(true)}
   className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg mt-2"
 >
-  Choose Avatar 🎨
+  {t("chooseAvatar")} 🎨
 </button>
 
               <button
                 onClick={() => navigate("/guard/settings")}
                 className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded-lg mt-2"
               >
-                Settings ⚙️
+                {t("settings")} ⚙️
               </button>
 
               <button
                 onClick={handleLogout}
                 className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 rounded-lg"
               >
-                Logout 🚪
+                {t("logout")} 🚪
               </button>
             </div>
           )}
@@ -173,7 +203,7 @@ useEffect(() => {
     <div className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-lg">
 
       <h2 className="text-xl font-bold mb-4 text-center text-brown">
-        Select Your Avatar
+        {t("selectAvatar")}
       </h2>
 
       <div className="grid grid-cols-3 gap-4 max-h-80 overflow-y-auto">
@@ -208,7 +238,7 @@ useEffect(() => {
         onClick={() => setShowAvatarModal(false)}
         className="mt-5 w-full py-2 bg-brown text-white rounded-xl hover:bg-opacity-90"
       >
-        Close
+        {t("close")}
       </button>
     </div>
   </div>

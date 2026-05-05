@@ -13,7 +13,17 @@ const normalizeEmail = (email) =>
 
 // POST /api/parent/visit-request
 router.post("/visit-request", parentAuth, async (req, res) => {
-  try {
+  let {
+  dateOfVisit,
+  vehicleNo,
+  noOfCompanions,
+  vehicleType,
+  driverName,
+  driverPhone,
+  driverVehicleNumber,
+  companions
+} = req.body;
+try {
     const { dateOfVisit, vehicleNo, noOfCompanions } = req.body;
 
     if (!dateOfVisit || noOfCompanions === undefined) {
@@ -59,7 +69,26 @@ router.post("/visit-request", parentAuth, async (req, res) => {
         message: "Parent email not linked to student record",
       });
     }
+    // ⭐ Public transport validation
+if (vehicleType === "Public") {
+  if (!driverName || !driverName.trim()) {
+    return res.status(400).json({
+      message: "Driver name is required for public transport"
+    });
+  }
 
+  if (!driverPhone || !/^\d{10}$/.test(driverPhone)) {
+    return res.status(400).json({
+      message: "Driver phone must be exactly 10 digits"
+    });
+  }
+
+  if (!driverVehicleNumber || !driverVehicleNumber.trim()) {
+    return res.status(400).json({
+      message: "Driver vehicle number is required"
+    });
+  }
+}
     if (!phoneNumber) {
       return res.status(400).json({
         message: "No parent phone number available",
@@ -93,14 +122,23 @@ router.post("/visit-request", parentAuth, async (req, res) => {
 
     // ✅ SAVE VISIT
     const visit = new OccasionalVisitor({
-      visitorName,
-      visitorType: "Parent",
-      phoneNumber,
-      vehicleNo,
-      noOfCompanions,
-      dateOfVisit: visitDate,
-      reason: "Child Visit",
-    });
+  visitorName,
+  visitorType: "Parent",
+  phoneNumber,
+
+  vehicleType,
+  vehicleNo,
+
+  driverName,
+  driverPhone,
+  driverVehicleNumber,
+
+  noOfCompanions,
+  companions: req.body.companions || [],
+
+  dateOfVisit: visitDate,
+  reason: "Child Visit",
+});
 
     await visit.save();
 

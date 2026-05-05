@@ -71,14 +71,21 @@ router.post("/requests/:id/approve", async (req, res) => {
        ➜ CREATE OCCASIONAL VISITOR
        ======================= */
     const occasionalVisitor = new OccasionalVisitor({
-      visitorName: request.visitorName,
-      noOfCompanions: request.numberOfPeople,
-      vehicleNo: request.vehicleNumber,
-      visitorType: request.type === "parent" ? "Parent" : "Non-Parent",
-      reason: request.otherReason, // now guaranteed non-empty
-      phoneNumber: request.phoneNumber,
-      dateOfVisit: parsedDate
-    });
+  visitorName: request.visitorName,
+  noOfCompanions: request.numberOfPeople,
+  vehicleNo: request.vehicleNumber,
+  vehicleType: request.vehicleType,   // ⭐ NEW
+
+  // ⭐ NEW (Public Transport)
+  driverName: request.driverName,
+  driverPhone: request.driverPhone,
+  driverVehicleNumber: request.driverVehicleNumber,
+
+  visitorType: request.type === "parent" ? "Parent" : "Non-Parent",
+  reason: request.otherReason,
+  phoneNumber: request.phoneNumber,
+  dateOfVisit: parsedDate
+});
 
     await occasionalVisitor.save();
 

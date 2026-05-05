@@ -10,8 +10,9 @@ import Footer from "../components/Footer";
 import SecureEntryVideo from "../assets/Secure_Entry_Demo.mp4";
 import NotifyVideo from "../assets/Notify.mp4"; 
 import VehicleVideo from "../assets/veh.mp4";
-
+import { useTranslation } from "react-i18next";
 export default function HomePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -55,38 +56,39 @@ export default function HomePage() {
       <main className="p-10 md:p-20 text-brown">
         {/* Welcome Card */}
         <div className="bg-cream rounded-3xl shadow-2xl p-10 text-center space-y-6 mt-10 transform hover:scale-105 transition-transform duration-500">
-          <h1 className="text-5xl md:text-6xl font-extrabold">Welcome to AGSS-BV</h1>
+          <h1 className="text-5xl md:text-6xl font-extrabold">{t("homeWelcome")}</h1>
           <p className="text-xl md:text-2xl">
-            Automated Gate Security System for Banasthali Vidyapith
+            {t("homeSubtitle")}
           </p>
           <Link to="/login">
           <button className="px-8 py-4 bg-gradient-to-r from-brown to-brown/80 text-cream rounded-full font-semibold hover:scale-105 hover:shadow-xl transition-all duration-500">
-            Get Started
+            {t("getStarted")}
           </button>
           </Link>
         </div>
 
         {/* Features / Info Cards */}
         <div className="mt-16 grid md:grid-cols-3 gap-10">
-          {[{
-            title: "Secure Entry",
-            desc: "Biometric and ID-based student and visitor verification.",
-            icon: "🔒",
-            link: "/secure-entry",
-            video: SecureEntryVideo
-          },{
-            title: "Smart Notifications",
-            desc: "Parents get instant alerts when students exit or enter campus.",
-            icon: "📲",
-            link: "/notify",
-            video: NotifyVideo
-          },{
-            title: "Vehicle Management",
-            desc: "Automated gate control and whitelist management for vehicles.",
-            icon: "🚗",
-            link: "/vehicle",
-            video: VehicleVideo
-          }].map((feature, idx) => (
+          {[
+              {
+                title: t("secureEntryTitle"),
+                desc: t("secureEntryDesc"),
+                icon: "🔒",
+                link: "/secure-entry"
+              },
+              {
+                title: t("smartNotifTitle"),
+                desc: t("smartNotifDesc"),
+                icon: "📲",
+                link: "/notify"
+              },
+              {
+                title: t("vehicleMgmtTitle"),
+                desc: t("vehicleMgmtDesc"),
+                icon: "🚗",
+                link: "/vehicle"
+              }
+            ].map((feature, idx) => (
             <div
               key={idx}
               onClick={() => feature.link && navigate(feature.link)}

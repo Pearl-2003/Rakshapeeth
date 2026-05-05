@@ -87,10 +87,10 @@ useEffect(() => {
           </button>
 
           <div className="hidden md:flex space-x-8">
-            <Link to="/" className="font-semibold hover:text-cream-200">Home</Link>
-            <Link to="/about" className="font-semibold hover:text-cream-200">About</Link>
-            <Link to="/customer-care" className="font-semibold hover:text-cream-200">Customer Care</Link>
-            <Link to="/ContactUs" className="font-semibold hover:text-cream-200">Contact Us</Link>
+            <Link to="/admin/dashboard" className="font-semibold hover:text-cream-200">Home</Link>
+            {/* <Link to="/about" className="font-semibold hover:text-cream-200">About</Link> */}
+            <Link to="/admin/customer-care" className="font-semibold hover:text-cream-200">Customer Care</Link>
+            <Link to="/admin/contact-us" className="font-semibold hover:text-cream-200">Contact Us</Link>
           </div>
         </div>
 
